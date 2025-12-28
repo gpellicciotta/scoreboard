@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Simple scoreboard" />
+  <title>Scoreboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@^5/dist/reset.css">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@^5/dist/reveal.css">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@^5/dist/theme/black.css" id="theme">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="scoreboard-styles.css">
+  <script src="scoreboard.js" defer></script>
+</head>
+<body>
+  <main class="scoreboard-app" role="main">
+
+    <aside id="scoreboard-sidebar" class="scoreboard-sidebar collapsed" role="complementary">
+      <button id="sidebar-toggle" class="sidebar-toggle" aria-expanded="false" aria-controls="scoreboard-sidebar" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+      <div class="sidebar-content" id="sidebar-content">
+        <h1>SCOREBOARD</h1>
+        <div class="sidebar-actions">
+          <button id="scoreboard-reset" aria-label="Reset scores">
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+            <span class="label">Reset</span>
+          </button>
+          <button id="auto-sort-toggle" aria-pressed="true" aria-label="Toggle auto-sort">
+            <i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>
+            <span class="label">Auto-sort</span>
+          </button>
+          <button id="export-json" aria-label="Export scores">
+            <i class="fa-solid fa-download" aria-hidden="true"></i>
+            <span class="label">Export</span>
+          </button>
+          <button id="import-json" aria-label="Import scores">
+            <i class="fa-solid fa-upload" aria-hidden="true"></i>
+            <span class="label">Import</span>
+          </button>
+           <button id="finish-game" aria-label="Finish game and celebrate">
+             <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+             <span class="label">Finish Game</span>
+           </button>
+        </div>
+      </div>
+    </aside>
+
+    <ul id="scoreboard-list" class="scoreboard-list" aria-live="polite"></ul>
+
+    <template id="score-item-template">
+      <li class="score-item">
+        <div class="score-controls">
+          <button class="decrease" aria-label="Decrease score">
+            <i class="fa-solid fa-minus" aria-hidden="true"></i>
+          </button>
+          <button class="increase" aria-label="Increase score">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="score-meta">
+          <span class="score-name"></span>
+          <span class="score-value">0</span>
+        </div>
+      </li>
+    </template>
+
+  </main>
+
+</body>
+</html>

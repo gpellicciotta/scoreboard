@@ -1,0 +1,15 @@
+node_modules/
+.DS_Store
+Thumbs.db
+/*.log
+.env
+.vscode/
+.idea/
+/.history
+dist/
+build/
+*.pyc
+__pycache__/
+
+# optional editor files
+*.sublime-workspace

@@ -1,0 +1,237 @@
+(function () {
+  // # Constants
+  const LS_KEY = 'scoreboard.v1'; // Use for local storage
+  const MARK_LAST = false; // Set to `true` to mark the lowest-ranked participant with `rank-last` styling
+  const DEFAULT_NAMES = ['Alyssa', 'Evelien', 'Alexander', 'Erik', 'Luca', 'Noah', 'Hilde', 'Giovanni']; // Default participants (config)
+
+  let state = { players: [] };
+  let tpl = null;
+
+  const el = (id) => document.getElementById(id);
+
+  // # Persistence / Helpers
+
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { console.warn('Failed to save', e) }
+  }
+
+  function load() {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      try { state = JSON.parse(raw); } catch (e) { state = { players: [] } }
+    }
+  }
+
+  function saveAndRender() { save(); render(); }
+
+  function getPlayer(name) { return state.players.find(x => x.name === name); }
+
+  // # Rendering / ranking
+
+  function applyRankClasses(li, score, rank, isLast) {
+    li.classList.remove('rank-gold', 'rank-silver', 'rank-bronze', 'rank-last');
+    if (score > 0) {
+      if (rank === 1) li.classList.add('rank-gold');
+      else if (rank === 2) li.classList.add('rank-silver');
+      else if (rank === 3) li.classList.add('rank-bronze');
+      if (isLast) li.classList.add('rank-last');
+    }
+  }
+
+  function render() {
+    const list = el('scoreboard-list');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!tpl) { console.error('Template not found'); return; }
+    // decide ordering: auto-sort (default true) or preserve state order
+    const autoSort = (state.autoSort === undefined) ? true : Boolean(state.autoSort);
+    const players = autoSort ? [...state.players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name)) : [...state.players];
+
+    // compute ranks from a sorted copy (so ranks reflect scores even when autoSort is off)
+    const sortedForRank = [...state.players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name));
+    const ranksByName = Object.create(null);
+    let lastRank = 0;
+    for (let i = 0; i < sortedForRank.length; i++) {
+      if (i === 0) lastRank = 1;
+      else lastRank = (sortedForRank[i].score === sortedForRank[i - 1].score) ? lastRank : i + 1;
+      ranksByName[sortedForRank[i].name] = lastRank;
+    }
+    const maxRank = sortedForRank.length ? ranksByName[sortedForRank[sortedForRank.length - 1].name] : 1;
+
+    players.forEach((p, idx) => {
+      const rank = ranksByName[p.name] || 1;
+      const node = tpl.content.cloneNode(true);
+      const li = node.querySelector('.score-item');
+      if (!li) return;
+      li.dataset.name = p.name;
+      const nameEl = li.querySelector('.score-name');
+      const valueEl = li.querySelector('.score-value');
+      if (nameEl) nameEl.textContent = p.name;
+      if (valueEl) valueEl.textContent = p.score;
+      // apply ranking classes
+      applyRankClasses(li, p.score, rank, MARK_LAST && rank === maxRank && players.length > 1);
+      list.appendChild(node);
+    });
+    const top = players.length ? players[0].name + ' (' + players[0].score + ')' : '—';
+    const topEl = el('score-top'); if (topEl) topEl.textContent = top;
+  }
+
+  // # Implementation Support
+
+  function changeScore(name, delta) {
+    const p = getPlayer(name);
+    if (!p) return;
+    // prevent negative scores
+    p.score = Math.max(0, p.score + delta);
+    saveAndRender();
+  }
+
+  // # Public API functions (for external, programmatic usage)
+
+  function setPlayers(names) {
+    // remove duplicates while preserving order
+    const seen = new Set();
+    state.players = names.map(n => ({ name: n.trim(), score: 0 })).filter(p => p.name.length).filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; });
+    save(); render();
+  }
+
+  function setScore(name, value) {
+    const p = getPlayer(name);
+    if (!p) return;
+    p.score = Math.max(0, value);
+    saveAndRender();
+  }
+
+  // Expose public API for external scripts/console
+  if (typeof window !== 'undefined') {
+    window.setPlayers = setPlayers;
+    window.setScore = setScore;
+  }
+
+  // # Initialization functions
+
+  function initSettings() {
+    const btn = el('auto-sort-toggle');
+    if (!btn) return;
+    // ensure state.autoSort exists (default true)
+    if (typeof state.autoSort === 'undefined') state.autoSort = true;
+    const setUI = () => {
+      const on = Boolean(state.autoSort);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.classList.toggle('active', on);
+    };
+    setUI();
+    btn.addEventListener('click', () => {
+      state.autoSort = !Boolean(state.autoSort);
+      save();
+      setUI();
+      render();
+    });
+  }
+
+  function initSidebar() {
+    const sidebar = el('scoreboard-sidebar');
+    const sidebarToggle = el('sidebar-toggle') || el('header-toggle');
+    if (!sidebar || !sidebarToggle) return;
+    const icon = sidebarToggle.querySelector('i');
+    const setState = (expanded) => {
+      sidebarToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      sidebar.classList.toggle('collapsed', !expanded);
+      sidebar.classList.toggle('expanded', expanded);
+      sidebarToggle.classList.toggle('expanded', expanded);
+      if (icon) {
+        if (expanded) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); }
+        else { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
+      }
+    };
+    setState(!sidebar.classList.contains('collapsed'));
+    sidebarToggle.addEventListener('click', () => {
+      const nowExpanded = sidebar.classList.contains('collapsed');
+      setState(nowExpanded);
+      sidebar.setAttribute('data-expanded', String(nowExpanded));
+    });
+  }
+
+  function initImportExport() {
+    const resetBtn = el('scoreboard-reset');
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+      try { localStorage.removeItem(LS_KEY); } catch (e) { }
+      state.players = DEFAULT_NAMES.map(n => ({ name: n, score: 0 }));
+      saveAndRender();
+    });
+
+    const exportBtn = el('export-json');
+    if (exportBtn) exportBtn.addEventListener('click', () => {
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'scoreboard.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    const importBtn = el('import-json');
+    if (importBtn) importBtn.addEventListener('click', () => {
+      const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json';
+      input.onchange = () => {
+        const f = input.files[0]; if (!f) return;
+        const r = new FileReader(); r.onload = () => {
+          try {
+            const parsed = JSON.parse(r.result);
+            if (parsed.players && Array.isArray(parsed.players)) {
+              state.players = parsed.players.map(pp => ({ name: String(pp.name || '').trim(), score: Math.max(0, Number(pp.score) || 0) })).filter(x => x.name.length);
+              saveAndRender();
+            } else alert('Invalid file');
+          } catch (e) { alert('Invalid JSON') }
+        }; r.readAsText(f);
+      }; input.click();
+    });
+  }
+
+  function initListControls() {
+    const list = el('scoreboard-list');
+    if (!list) return;
+    list.addEventListener('click', (ev) => {
+      const inc = ev.target.closest('.increase');
+      const dec = ev.target.closest('.decrease');
+      const item = ev.target.closest('.score-item');
+      if (!item) return;
+      const name = item.dataset.name;
+      if (inc) { changeScore(name, +1); }
+      else if (dec) { changeScore(name, -1); }
+    });
+  }
+
+  function initFinishGame() {
+    const btn = el('finish-game');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      if (!state.players || state.players.length === 0) return;
+      const scores = state.players.map(p => Number(p.score) || 0);
+      const max = Math.max(...scores);
+      const winners = state.players.filter(p => (Number(p.score) || 0) === max).map(p => p.name);
+      let msg = '';
+      if (winners.length === 1) msg = winners[0] + ' Has Won!';
+      else if (winners.length === 2) msg = winners[0] + ' and ' + winners[1] + ' Have All Won!';
+      else msg = winners.slice(0, -1).join(', ') + ' and ' + winners[winners.length - 1] + ' Have All Won!';
+      const url = 'celebration.html?s=10&msg=' + encodeURIComponent(msg);
+      window.open(url, '_blank', 'noopener');
+    });
+  }
+
+  // # Event handlers
+
+  document.addEventListener('DOMContentLoaded', () => {
+    tpl = document.getElementById('score-item-template');
+    load();
+    if (!state.players || state.players.length === 0) {
+      state.players = DEFAULT_NAMES.map(n => ({ name: n, score: 0 }));
+      save();
+    }
+    render();
+    initSidebar();
+    initImportExport();
+    initListControls();
+    initSettings();
+    initFinishGame();
+  });
+
+})();
