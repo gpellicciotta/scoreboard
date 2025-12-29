@@ -6,6 +6,8 @@
 
   let state = { players: [] };
   let tpl = null;
+  let _configBackup = null;
+  let _isConfiguring = false;
 
   const el = (id) => document.getElementById(id);
 
@@ -150,6 +152,17 @@
       setState(nowExpanded);
       sidebar.setAttribute('data-expanded', String(nowExpanded));
     });
+    // close the sidebar when any action button inside it is clicked
+    const actionsContainer = sidebar.querySelector('.sidebar-actions');
+    if (actionsContainer) {
+      actionsContainer.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('button');
+        if (btn) {
+          setState(false);
+          sidebar.setAttribute('data-expanded', 'false');
+        }
+      });
+    }
   }
 
   function initImportExport() {
@@ -162,7 +175,8 @@
 
     const exportBtn = el('export-json');
     if (exportBtn) exportBtn.addEventListener('click', () => {
-      const data = JSON.stringify(state, null, 2);
+      const exportObj = { players: state.players, 'auto-sort': Boolean(state.autoSort) };
+      const data = JSON.stringify(exportObj, null, 2);
       const blob = new Blob([data], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'scoreboard.json'; a.click(); URL.revokeObjectURL(url);
@@ -178,12 +192,64 @@
             const parsed = JSON.parse(r.result);
             if (parsed.players && Array.isArray(parsed.players)) {
               state.players = parsed.players.map(pp => ({ name: String(pp.name || '').trim(), score: Math.max(0, Number(pp.score) || 0) })).filter(x => x.name.length);
+              if (parsed['auto-sort'] !== undefined) state.autoSort = Boolean(parsed['auto-sort']);
+              else if (parsed.autoSort !== undefined) state.autoSort = Boolean(parsed.autoSort);
               saveAndRender();
             } else alert('Invalid file');
           } catch (e) { alert('Invalid JSON') }
         }; r.readAsText(f);
       }; input.click();
     });
+  }
+
+  // # Configuration editor (opens JSON editor replacing participant list)
+  function enterConfigureMode() {
+    if (_isConfiguring) return;
+    const list = el('scoreboard-list');
+    const editor = el('config-editor');
+    const ta = el('config-textarea');
+    if (!list || !editor || !ta) return;
+    _isConfiguring = true;
+    // populate textarea with current configuration
+    const exportObj = { players: state.players, 'auto-sort': Boolean(state.autoSort) };
+    ta.value = JSON.stringify(exportObj, null, 2);
+    // hide the list and show the editor
+    list.setAttribute('hidden', '');
+    editor.removeAttribute('hidden');
+
+    // wire up buttons (idempotent)
+    const discard = el('config-discard');
+    const save = el('config-save');
+    if (discard) {
+      discard.onclick = () => {
+        _isConfiguring = false;
+        editor.setAttribute('hidden', '');
+        list.removeAttribute('hidden');
+        render();
+      };
+    }
+    if (save) {
+      save.onclick = () => {
+        try {
+          const parsed = JSON.parse(ta.value);
+          if (parsed.players && Array.isArray(parsed.players)) {
+            state.players = parsed.players.map(pp => ({ name: String(pp.name || '').trim(), score: Math.max(0, Number(pp.score) || 0) })).filter(x => x.name.length);
+            if (parsed['auto-sort'] !== undefined) state.autoSort = Boolean(parsed['auto-sort']);
+            else if (parsed.autoSort !== undefined) state.autoSort = Boolean(parsed.autoSort);
+            saveAndRender();
+            _isConfiguring = false;
+            editor.setAttribute('hidden', '');
+            list.removeAttribute('hidden');
+          } else alert('Invalid configuration: missing players array');
+        } catch (e) { alert('Invalid JSON: ' + e.message); }
+      };
+    }
+  }
+
+  function initConfigure() {
+    const btn = el('configure-json');
+    if (!btn) return;
+    btn.addEventListener('click', () => enterConfigureMode());
   }
 
   function initListControls() {
@@ -229,6 +295,7 @@
     render();
     initSidebar();
     initImportExport();
+    initConfigure();
     initListControls();
     initSettings();
     initFinishGame();

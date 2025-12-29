@@ -38,6 +38,10 @@
             <i class="fa-solid fa-upload" aria-hidden="true"></i>
             <span class="label">Import</span>
           </button>
+          <button id="configure-json" aria-label="Configure">
+            <i class="fa-solid fa-gear" aria-hidden="true"></i>
+            <span class="label">Configure</span>
+          </button>
            <button id="finish-game" aria-label="Finish game and celebrate">
              <i class="fa-solid fa-trophy" aria-hidden="true"></i>
              <span class="label">Finish Game</span>
@@ -47,6 +51,15 @@
     </aside>
 
     <ul id="scoreboard-list" class="scoreboard-list" aria-live="polite"></ul>
+
+    <!-- Configuration editor: hidden by default; shown when configuring -->
+    <div id="config-editor" class="config-editor" hidden>
+      <textarea id="config-textarea" aria-label="Configuration JSON"></textarea>
+      <div class="config-buttons">
+        <button id="config-discard" type="button">Discard</button>
+        <button id="config-save" type="button">Save</button>
+      </div>
+    </div>
 
     <template id="score-item-template">
       <li class="score-item">
