@@ -203,7 +203,7 @@ body {
   height: 100vh;
   width: var(--sidebar-collapsed-width);
   max-width: 85vw;
-  background: rgba(17, 17, 17, 0.92);
+  background: rgba(17, 17, 17);
   border-right: 1px solid var(--muted-border);
   padding: 0;
   box-sizing: border-box;
@@ -900,4 +900,29 @@ button.sidebar-toggle {
   padding: 0;
   width: 2rem;
   height: 2rem;
+}
+
+/* Configuration editor shown inside the participant list */
+.config-editor textarea {
+  width: 100%;
+  min-height: 320px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+  padding: 0.5rem;
+  border: 1px solid var(--muted-border);
+  border-radius: 0.375rem;
+  background: rgba(0,0,0,0.35);
+  color: var(--r-color);
+  box-sizing: border-box;
+}
+
+.config-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.config-buttons button {
+  padding: 0.5rem 0.75rem;
 }
