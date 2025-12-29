@@ -8,5 +8,7 @@
     { "name": "Noah", "score": 0 },
     { "name": "Hilde", "score": 0 }
   ],
-  "auto-sort": true
+  ],
+  "auto-sort": true,
+  "celebration-link": "celebration.html?s=10&msg={{MESSAGE}}"
 }
