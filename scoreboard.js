@@ -169,9 +169,11 @@
   function initImportExport() {
     const resetBtn = el('scoreboard-reset');
     if (resetBtn) resetBtn.addEventListener('click', () => {
-      try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch (e) { }
-      state.players = DEFAULT_NAMES.map(n => ({ name: n, score: 0 }));
-      saveAndRender();
+      // Reset only the scores for existing players; preserve player list and other settings
+      if (state.players && Array.isArray(state.players)) {
+        state.players.forEach(p => { if (p && typeof p === 'object') p.score = 0; });
+        saveAndRender();
+      }
     });
 
     const exportBtn = el('export-json');
