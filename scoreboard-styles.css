@@ -42,6 +42,7 @@
   --sidebar-expanded-width: 18rem;
   --sidebar-collapsed-width: 3rem;
 }
+
 /* Page base (use Reveal theme fallback values) */
 html,
 body {
@@ -49,12 +50,14 @@ body {
   margin: 0;
   padding: 0
 }
+
 body {
   background: var(--page-bg);
   color: var(--page-color);
   font-family: var(--main-font);
   font-size: var(--font-size);
 }
+
 .scoreboard-app {
   max-width: 880px;
   margin: 0 auto;
@@ -63,19 +66,23 @@ body {
   border-radius: 8px;
   font-size: var(--font-size);
 }
+
 .scoreboard-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
 .scoreboard-header h1 {
   font-size: 2rem;
   margin: 0
 }
+
 .scoreboard-list {
   list-style: none;
   padding: 0
 }
+
 .score-item {
   display: flex;
   align-items: center;
@@ -85,12 +92,14 @@ body {
   margin-bottom: 0.5rem;
   background: var(--muted-bg);
 }
+
 .score-meta {
   display: flex;
   align-items: center;
   flex: 1;
   min-width: 0
 }
+
 .score-item .score-name {
   font-weight: var(--font-weight-semibold);
   white-space: nowrap;
@@ -98,6 +107,7 @@ body {
   text-overflow: ellipsis;
   padding-left: 2em;
 }
+
 .score-item .score-value {
   font-family: var(--monospace-font);
   margin-left: auto;
@@ -109,12 +119,14 @@ body {
   font-weight: var(--font-weight-bold);
   box-shadow: 0 0.125rem 0.375rem var(--shadow);
 }
+
 .score-controls {
   display: flex;
   align-items: center;
   gap: var(--control-gap);
   margin-right: 0.5rem
 }
+
 .score-controls button {
   background: var(--blue);
   border-color: var(--blue);
@@ -130,13 +142,16 @@ body {
   min-width: 0;
   margin: 0;
 }
+
 .score-controls button i {
   font-size: var(--font-size-regular);
   line-height: 1
 }
+
 .score-controls button:hover {
   filter: brightness(0.95)
 }
+
 /* Toggle / header controls */
 .header-toggle {
   position: fixed;
@@ -156,6 +171,7 @@ body {
   z-index: 90;
   border-radius: 0.375rem;
 }
+
 .sidebar-toggle {
   position: absolute;
   top: 0;
@@ -174,24 +190,29 @@ body {
   z-index: 96;
   border-radius: 0.375rem;
 }
+
 .header-toggle:focus,
 .sidebar-toggle:focus {
   outline: none
 }
+
 .header-toggle i,
 .sidebar-toggle i {
   font-size: var(--font-size-large);
   line-height: 1;
   transition: transform .12s ease
 }
+
 .header-toggle:hover,
 .sidebar-toggle:hover {
   color: var(--btn-hover)
 }
+
 .header-toggle:active,
 .sidebar-toggle:active {
   color: var(--btn-active)
 }
+
 /* Sidebar container and sliding panel */
 .scoreboard-sidebar {
   position: fixed;
@@ -211,6 +232,7 @@ body {
   overflow: visible;
   transition: width .22s cubic-bezier(.2, .8, .2, 1);
 }
+
 .scoreboard-sidebar .sidebar-content {
   display: flex;
   flex-direction: column;
@@ -220,25 +242,30 @@ body {
   transform: translateX(-100%);
   transition: transform .22s cubic-bezier(.2, .8, .2, 1);
 }
+
 .scoreboard-sidebar .sidebar-actions {
   display: flex;
   gap: .5rem;
   flex-direction: column;
   align-items: stretch
 }
+
 .scoreboard-sidebar.collapsed .sidebar-content {
   transform: translateX(-100%);
   visibility: hidden;
   pointer-events: none
 }
+
 .scoreboard-sidebar.expanded {
   width: var(--sidebar-expanded-width);
 }
+
 .scoreboard-sidebar.expanded .sidebar-content {
   transform: translateX(0);
   visibility: visible;
   pointer-events: auto
 }
+
 /* Sidebar action buttons */
 .scoreboard-sidebar .sidebar-actions button {
   display: flex;
@@ -247,10 +274,12 @@ body {
   justify-content: flex-start;
   width: 100%;
 }
+
 .scoreboard-sidebar .sidebar-actions button i {
   width: 1.25rem;
   text-align: center
 }
+
 .scoreboard-sidebar .sidebar-actions button .label {
   flex: 1 1 auto;
   text-align: left;
@@ -259,10 +288,12 @@ body {
   color: var(--page-color);
   font-weight: var(--font-weight-normal);
 }
+
 .scoreboard-sidebar .sidebar-actions button:hover .label,
 .scoreboard-sidebar .sidebar-actions button:active .label {
   color: inherit;
 }
+
 /* Header action buttons */
 .header-actions button {
   display: inline-grid;
@@ -275,46 +306,58 @@ body {
   color: var(--blue);
   border: 1px solid var(--muted-border)
 }
+
 .header-actions button i {
   font-size: var(--font-size-regular);
   line-height: 1
 }
+
 .header-actions button:hover {
   background: var(--muted-hover);
   color: var(--blue)
 }
+
 .header-actions button:active {
   transform: translateY(1px)
 }
+
 /* Ranking colours */
 .score-item.rank-gold .score-value {
   background: var(--rank-gold);
   color: var(--rank-contrast-dark)
 }
+
 .score-item.rank-silver .score-value {
   background: var(--rank-silver);
   color: var(--rank-contrast-dark)
 }
+
 .score-item.rank-bronze .score-value {
   background: var(--rank-bronze);
   color: var(--btn-contrast)
 }
+
 .score-item.rank-last .score-value {
   background: var(--rank-last);
   color: var(--btn-contrast)
 }
+
 .score-item.rank-gold {
   border: 1px solid var(--rank-gold)
 }
+
 .score-item.rank-silver {
   border: 1px solid var(--rank-silver)
 }
+
 .score-item.rank-bronze {
   border: 1px solid var(--rank-bronze)
 }
+
 .score-item.rank-last {
   border: 1px solid var(--rank-last)
 }
+
 /* Generic buttons */
 .scoreboard-app button {
   padding: 0.5rem 0.75rem;
@@ -325,37 +368,45 @@ body {
   border: 1px solid var(--muted-border);
   color: var(--page-color);
 }
+
 .scoreboard-app button:hover {
   color: var(--btn-hover);
   border-color: var(--btn-hover);
   background: var(--btn-hover-bg);
 }
+
 .scoreboard-app button:active {
   color: var(--btn-active);
   border-color: var(--btn-active);
   background: var(--btn-active-bg);
 }
+
 .scoreboard-app button[disabled] {
   opacity: .5;
   cursor: default
 }
+
 /* Icon-only buttons */
 .sidebar-toggle,
 .score-controls button {
   border: none !important;
 }
+
 .sidebar-toggle:hover,
 .score-controls button:hover {
   border: none !important;
 }
+
 .sidebar-toggle:active,
 .score-controls button:active {
   border: none !important;
 }
+
 /* small overrides */
 button.sidebar-toggle {
   padding: 0.25rem !important
 }
+
 .scoreboard-app .score-controls button {
   min-width: 0;
   padding: 0;
@@ -364,13 +415,16 @@ button.sidebar-toggle {
   background: var(--blue);
   color: var(--btn-contrast);
 }
+
 .scoreboard-app .score-controls button:hover {
   background: var(--blue);
   filter: brightness(0.9);
 }
+
 .scoreboard-app .score-controls button:active {
   filter: brightness(0.8);
 }
+
 /* Configuration editor shown inside the participant list */
 .config-editor textarea {
   width: 100%;
@@ -384,15 +438,18 @@ button.sidebar-toggle {
   color: var(--page-color);
   box-sizing: border-box;
 }
+
 .config-buttons {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
   margin-top: 0.5rem;
 }
+
 .config-buttons button {
   padding: 0.5rem 0.75rem;
 }
+
 @media (max-width: 768px) {
   .scoreboard-app {
     padding: 1rem 1rem calc(var(--sidebar-collapsed-width) + 1rem) 1rem;
@@ -416,7 +473,8 @@ button.sidebar-toggle {
     width: 100vw;
   }
   .sidebar-toggle {
-    top: 0;
+    top: auto;
+    bottom: 0;
     left: auto;
     right: 0;
   }
