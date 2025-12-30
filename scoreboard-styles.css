@@ -60,11 +60,13 @@ body {
 
 .scoreboard-app {
   max-width: 880px;
+  min-height: 100vh;
   margin: 0 auto;
   background: var(--muted-bg);
   padding: 1rem 1rem 1rem calc(var(--sidebar-collapsed-width) + 1rem);
   border-radius: 8px;
   font-size: var(--font-size);
+  position: relative;
 }
 
 .scoreboard-header {
@@ -425,10 +427,23 @@ button.sidebar-toggle {
   filter: brightness(0.8);
 }
 
-/* Configuration editor shown inside the participant list */
+.config-editor:not([hidden]) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--sidebar-bg);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
 .config-editor textarea {
   width: 100%;
-  min-height: 320px;
+  flex-grow: 1;
+  min-height: 0;
   font-family: var(--monospace-font);
   font-size: var(--font-size-x-small);
   padding: 0.5rem;
