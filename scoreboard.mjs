@@ -2,6 +2,7 @@
 const LOCAL_STORAGE_KEY = 'scoreboard.v2'; // Use for local storage
 const DEFAULT_NAMES = ['Player #1', 'Player #2', 'Player #3', 'Player #4']; // Default participants (config)
 const DEFAULT_CELEBRATION_LINK = 'https://www.pellicciotta.com/cards/celebrate.html?message={{MESSAGE}}';
+const CLOUD_SAVE_URL = 'https://script.google.com/macros/s/AKfycbwW11Xm9k-4WTUNq7LbJcRaYxvDYdwSqit6Nna0_CEWYfIXCrzqTTbrPbvxjeBoUw6P/exec';
 const MARK_LAST = false; // Set to `true` to mark the lowest-ranked participant with `rank-last` styling
 
 let state = { players: [] };
@@ -110,6 +111,70 @@ if (typeof window !== 'undefined') {
 
 // # Initialization functions
 
+async function saveToCloud() {
+  const btn = el('save-to-cloud');
+  if (!btn) return;
+  btn.disabled = true;
+  try {
+    const exportObj = { players: state.players, 'auto-sort': Boolean(state.autoSort), 'celebration-link': state.celebrationLink || DEFAULT_CELEBRATION_LINK };
+    const response = await fetch(CLOUD_SAVE_URL, {
+      method: 'POST',
+      mode: 'cors',
+      body: JSON.stringify(exportObj, null, 2),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      }
+    });
+    const result = await response.json();
+    if (result.status !== 'success') {
+      throw new Error(result.message || 'Unknown error');
+    }
+    console.log('State saved to cloud!');
+  } 
+  catch (error) {
+    console.error('Failed to save state to cloud:', error);
+  } 
+  finally {
+    btn.disabled = false;
+  }
+}
+
+async function loadFromCloud() {
+  const btn = el('load-from-cloud');
+  if (!btn) return;
+  btn.disabled = true;
+  try {
+    const response = await fetch(CLOUD_SAVE_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const parsed = await response.json();
+    if (parsed.players && Array.isArray(parsed.players)) {
+      state.players = parsed.players.map(pp => ({ name: String(pp.name || '').trim(), score: Math.max(0, Number(pp.score) || 0) })).filter(x => x.name.length);
+      if (parsed['auto-sort'] !== undefined) state.autoSort = Boolean(parsed['auto-sort']);
+      if (parsed['celebration-link'] !== undefined) state.celebrationLink = String(parsed['celebration-link']);
+      saveAndRender();
+      console.log('State loaded from cloud!');
+    } 
+    else {
+      console.error('Failed to load state from cloud');
+    }
+  } 
+  catch (error) {
+    console.error('Failed to load state from cloud:', error);
+  } 
+  finally {
+    btn.disabled = false;
+  }
+}
+
+function initCloudSave() {
+    const saveBtn = el('save-to-cloud');
+    const loadBtn = el('load-from-cloud');
+    if (saveBtn) saveBtn.addEventListener('click', saveToCloud);
+    if (loadBtn) loadBtn.addEventListener('click', loadFromCloud);
+}
+
 function initSettings() {
   const btn = el('auto-sort-toggle');
   if (!btn) return;
@@ -187,7 +252,8 @@ function initImportExport() {
     const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json';
     input.onchange = () => {
       const f = input.files[0]; if (!f) return;
-      const r = new FileReader(); r.onload = () => {
+      const r = new FileReader(); 
+      r.onload = () => {
         try {
           const parsed = JSON.parse(r.result);
           if (parsed.players && Array.isArray(parsed.players)) {
@@ -197,10 +263,18 @@ function initImportExport() {
             if (parsed['celebration-link'] !== undefined) state.celebrationLink = String(parsed['celebration-link']);
             else if (parsed.celebrationLink !== undefined) state.celebrationLink = String(parsed.celebrationLink);
             saveAndRender();
-          } else alert('Invalid file');
-        } catch (e) { alert('Invalid JSON') }
-      }; r.readAsText(f);
-    }; input.click();
+          } 
+          else {
+            console.error('Failed to import state from JSON file');
+          }
+        } 
+        catch (e) { 
+          console.error('Failed to import state from JSON file: ' + e.message || 'Unknown error'); 
+        }
+      }; 
+      r.readAsText(f);
+    }; 
+    input.click();
   });
 }
 
@@ -244,8 +318,14 @@ function enterConfigureMode() {
           _isConfiguring = false;
           editor.setAttribute('hidden', '');
           list.removeAttribute('hidden');
-        } else alert('Invalid configuration: missing players array');
-      } catch (e) { alert('Invalid JSON: ' + e.message); }
+        } 
+        else { 
+          console.error('Invalid configuration JSON: missing players array');
+        }
+      } 
+      catch (e) { 
+        console.error('Invalid configuration JSON: ' + e.message); 
+      }
     };
   }
 }
@@ -321,4 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initListControls();
   initSettings();
   initFinishGame();
+  initCloudSave();
 });
+
