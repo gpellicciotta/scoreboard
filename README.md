@@ -9,6 +9,8 @@ You can click on the names to add points as participants answer questions correc
 
 This can also be prepared by uploading a JSON file with participant names.
 
+Via [Github Pages](https://github.com/gpellicciotta/scoreboard), the scoreboard will also be hosted at: [https://www.pellicciotta.com/scoreboard/](https://www.pellicciotta.com/scoreboard/)
+
 ## Available actions
 
 - Click on a participant's "+" or "-" buttons to add or subtract a point.
