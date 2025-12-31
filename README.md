@@ -46,3 +46,10 @@ Follow these steps:
       - Choose your Google Account.  You will almost certainly see a warning screen saying "Google hasn't verified this app". This is normal for personal scripts. Click Advanced, then click Go to [Your Project Name] (unsafe).
       - On the next screen, review the permissions the script needs (it will ask to access Google Drive to store the file) and click Allow.
    6. Copy the URL: After you allow access, a final dialog will appear with a Web app URL. This is the private URL for your API. Click the Copy button to copy it to your clipboard.
+
+   ## Todo's 
+
+   - Make sure the seven-wonders scoreboards have same style + also option to import/export from JSON (preferably by extending the existing, generic, JSON format)
+   - Ensure the "Finish Game" button also always stores the final scores to the cloud
+   - Have a separate "Finished Games" view showing all past scores + winner leaderboard, per game
+   - Add option to give the game played a name
