@@ -6,9 +6,15 @@ This document outlines the high-level architecture of the Hinolugi Scoreboard ap
 
 The application is a lightweight, serverless web application with a vanilla JavaScript frontend and a Google Apps Script backend.
 
-1.  **Frontend:** A Single Page Application (SPA) built with plain JavaScript, HTML, and CSS. The main entry point is `index.html`, which loads the application logic from `scoreboard.mjs`. The state is managed in a simple JavaScript object and persisted in the browser's `localStorage` for session-to-session persistence.
+### Frontend
+A Single Page Application (SPA) built with plain JavaScript, HTML, and CSS. 
+The main entry point is `index.html`, which loads the application logic from `scoreboard.mjs`. 
+The state is managed in a simple JavaScript object and persisted in the browser's `localStorage` for session-to-session persistence.
 
-2.  **Backend:** A Google Apps Script (`scoreboard-backend.js`) acts as a simple, serverless backend. It exposes `doGet` and `doPost` methods that are triggered by HTTP requests from the frontend. It uses the Google Drive API (`DriveApp`) to store the scoreboard data as a JSON file (`last-saved-scoreboard.json`) in the user's Google Drive.
+### Backend
+A Google Apps Script (`scoreboard-backend.js`) acts as a simple, serverless backend. 
+It exposes `doGet` and `doPost` methods that are triggered by HTTP requests from the frontend. 
+It uses the Google Drive API (`DriveApp`) to store the scoreboard data as a JSON file (`last-saved-scoreboard.json`) in the user's Google Drive.
 
 There are also separate HTML/JS/CSS files for specific games like "Seven Wonders", which seem to be standalone pages and not part of the main scoreboard's SPA architecture, but likely follow a similar pattern.
 
@@ -16,7 +22,7 @@ There are also separate HTML/JS/CSS files for specific games like "Seven Wonders
 
 The core of the frontend application is the `state` object, which holds all the data required to render the scoreboard and manage its settings. This object is persisted to `localStorage` and can be saved to/loaded from the cloud.
 
-Here is the structure of the `state` object with a description of its properties:
+Here is the structure of the `state` object:
 
 ```javascript
 {
@@ -31,6 +37,7 @@ Here is the structure of the `state` object with a description of its properties
   ]
 }
 ```
+It exposes following properties:
 
 *   `game` (string | null): The name of the game being played.
 *   `play-date` (string | null): An ISO 8601 string representing the date and time of the game session.
@@ -41,6 +48,7 @@ Here is the structure of the `state` object with a description of its properties
     *   `name` (string): The player's name.
     *   `score` (number): The player's current score.
     *   `play-details` (Object): A flexible object to store game-specific details for a player.
+
 
 ## Frontend-to-Backend Communication
 
