@@ -487,6 +487,66 @@ function initFinishGame() {
   });
 }
 
+function initNewGame() {
+  const newGameBtn = el('new-game');
+  const newGameSection = el('new-game-section');
+  const scoreboardList = el('scoreboard-list');
+  const configEditor = el('config-editor');
+
+  if (!newGameBtn || !newGameSection) return;
+
+  const newGameDiscardBtn = el('new-game-discard');
+  const newGameCreateBtn = el('new-game-create');
+  const gameTypeRadios = document.querySelectorAll('input[name="game-type"]');
+  const genericSettings = el('generic-game-settings');
+  const duelSettings = el('duel-game-settings');
+  const classicSettings = el('classic-game-settings');
+
+  newGameBtn.addEventListener('click', () => {
+    newGameSection.hidden = false;
+    scoreboardList.hidden = true;
+    configEditor.hidden = true;
+  });
+
+  newGameDiscardBtn.addEventListener('click', () => {
+    newGameSection.hidden = true;
+    scoreboardList.hidden = false;
+  });
+
+  gameTypeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      genericSettings.hidden = radio.value !== 'generic';
+      duelSettings.hidden = radio.value !== 'duel';
+      classicSettings.hidden = radio.value !== 'classic';
+    });
+  });
+
+  newGameCreateBtn.addEventListener('click', () => {
+    const selectedType = document.querySelector('input[name="game-type"]:checked').value;
+
+    if (selectedType === 'generic') {
+      const gameName = el('game-name').value || 'Generic Game';
+      const numPlayers = parseInt(el('generic-players').value, 10);
+      const players = [];
+      for (let i = 1; i <= numPlayers; i++) {
+        players.push({ name: `Player ${i}`, score: 0, 'play-details': {} });
+      }
+      state.game = gameName;
+      state.players = players;
+      saveAndRender();
+      newGameSection.hidden = true;
+      scoreboardList.hidden = false;
+    } 
+    else if (selectedType === 'duel') {
+      window.location.href = 'seven-wonders-duel.html';
+    } 
+    else if (selectedType === 'classic') {
+      const numPlayers = el('classic-players').value;
+      window.location.href = `seven-wonders.html?players=${numPlayers}`;
+    }
+  });
+}
+
 // # Event handlers
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -508,4 +568,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initSettings();
   initFinishGame();
   initCloudSave();
+  initNewGame();
 });
