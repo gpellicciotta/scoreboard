@@ -2,6 +2,17 @@
 const LOCAL_STORAGE_KEY = 'scoreboard.v2'; // Use for local storage
 const CLOUD_SAVE_URL = 'https://script.google.com/macros/s/AKfycbwW11Xm9k-4WTUNq7LbJcRaYxvDYdwSqit6Nna0_CEWYfIXCrzqTTbrPbvxjeBoUw6P/exec';
 
+const DUEL_CATEGORIES = {
+  'Civilian': 'blue-cards',
+  'Science': 'green-cards',
+  'Commercial': 'yellow-cards',
+  'Guilds': 'purple-cards',
+  'Wonders': 'wonders',
+  'Progress': 'green-coins',
+  'Coins': 'money-coins',
+  'Military': 'military'
+};
+
 // Default config choices
 const DEFAULT_NAMES = ['Player #1', 'Player #2', 'Player #3', 'Player #4']; // Default participants (config)
 const DEFAULT_AUTO_SORT = true; // Default auto-sort
@@ -139,15 +150,29 @@ function applyRankClasses(li, score, rank, isLast) {
 
 function render() {
   updateTitle();
-  const list = el('scoreboard-list');
+  const genericList = el('scoreboard-list');
+  const duelBoard = el('seven-wonders-duel-scoreboard');
+
+  if (state.game === '7 Wonders Duel') {
+    genericList.hidden = true;
+    duelBoard.hidden = false;
+    renderDuelScoreboard(duelBoard, state.players);
+  } else {
+    genericList.hidden = false;
+    duelBoard.hidden = true;
+    renderGenericList(genericList, state.players);
+  }
+}
+
+function renderGenericList(list, players) {
   if (!list) return;
   list.innerHTML = '';
   if (!tpl) { console.error('Template not found'); return; }
   // Decide ordering: auto-sort (default true) or preserve state order
   const autoSort = (state['auto-sort'] === undefined) ? true : Boolean(state['auto-sort']);
-  const players = autoSort ? [...state.players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name)) : [...state.players];
+  const sortedPlayers = autoSort ? [...players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name)) : [...players];
   // Compute ranks from a sorted copy (so ranks reflect scores even when autoSort is off)
-  const sortedForRank = [...state.players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name));
+  const sortedForRank = [...players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name));
   const ranksByName = Object.create(null);
   let lastRank = 0;
   for (let i = 0; i < sortedForRank.length; i++) {
@@ -157,7 +182,7 @@ function render() {
   }
   const maxRank = sortedForRank.length ? ranksByName[sortedForRank[sortedForRank.length - 1].name] : 1;
 
-  players.forEach((p, idx) => {
+  sortedPlayers.forEach((p, idx) => {
     const rank = ranksByName[p.name] || 1;
     const node = tpl.content.cloneNode(true);
     const li = node.querySelector('.score-item');
@@ -171,8 +196,46 @@ function render() {
     applyRankClasses(li, p.score, rank, MARK_LAST && rank === maxRank && players.length > 1);
     list.appendChild(node);
   });
-  const top = players.length ? players[0].name + ' (' + players[0].score + ')' : '—';
-  const topEl = el('score-top'); if (topEl) topEl.textContent = top;
+}
+
+function renderDuelScoreboard(container, players) {
+    if (!container) return;
+
+    // Update player names
+    players.forEach((p, i) => {
+        const nameInput = container.querySelector(`.players input[data-player-index="${i}"]`);
+        if (nameInput) nameInput.value = p.name;
+    });
+
+    // Update sub-scores
+    for (const categoryName in DUEL_CATEGORIES) {
+        const category = DUEL_CATEGORIES[categoryName];
+        players.forEach((p, i) => {
+            const scoreInput = container.querySelector(`input[data-player-index="${i}"][data-category="${category}"]`);
+            if (scoreInput) scoreInput.value = p['play-details'][category] || 0;
+        });
+    }
+
+    // Update total scores
+    players.forEach((p, i) => {
+        const sumInput = container.querySelector(`.sum input[data-player-index="${i}"]`);
+        if (sumInput) sumInput.value = p.score;
+    });
+}
+
+function recalculateDuelScore(player) {
+  if (!player || !player['play-details']) return;
+  let total = 0;
+  for (const categoryName in DUEL_CATEGORIES) {
+    const category = DUEL_CATEGORIES[categoryName];
+    const value = Number(player['play-details'][category] || 0);
+    if (category === 'money-coins') {
+      total += Math.floor(value / 3);
+    } else {
+      total += value;
+    }
+  }
+  player.score = total;
 }
 
 // # Implementation Support
@@ -349,7 +412,16 @@ function initImportExport() {
   if (resetBtn) resetBtn.addEventListener('click', () => {
     // Reset only the scores for existing players; preserve player list and other settings
     if (state.players && Array.isArray(state.players)) {
-      state.players.forEach(p => { if (p && typeof p === 'object') p.score = 0; });
+      state.players.forEach(p => { 
+        if (p && typeof p === 'object') {
+          p.score = 0;
+          if (p['play-details']) {
+            for (const key in p['play-details']) {
+              p['play-details'][key] = 0;
+            }
+          }
+        }
+      });
       saveAndRender();
     }
   });
@@ -373,6 +445,8 @@ function initImportExport() {
         try {
           const parsed = JSON.parse(r.result);
           if (loadStateObject(parsed)) {
+            el('new-game-section').hidden = true;
+            el('config-editor').hidden = true;
             saveAndRender();
           } 
           else {
@@ -393,6 +467,7 @@ function initImportExport() {
 function enterConfigureMode() {
   if (_isConfiguring) return;
   const list = el('scoreboard-list');
+  const duelBoard = el('seven-wonders-duel-scoreboard');
   const editor = el('config-editor');
   const ta = el('config-textarea');
   if (!list || !editor || !ta) return;
@@ -400,8 +475,9 @@ function enterConfigureMode() {
   // Populate textarea with current configuration
   const exportObj = getConfigurationObject();
   ta.value = JSON.stringify(exportObj, null, 2);
-  // Hide the list and show the editor
+  // Hide the scoreboards and show the editor
   list.setAttribute('hidden', '');
+  duelBoard.setAttribute('hidden', '');
   editor.removeAttribute('hidden');
   // Wire up buttons (idempotent)
   const discard = el('config-discard');
@@ -410,8 +486,7 @@ function enterConfigureMode() {
     discard.onclick = () => {
       _isConfiguring = false;
       editor.setAttribute('hidden', '');
-      list.removeAttribute('hidden');
-      render();
+      render(); // re-render to show correct board
     };
   }
   if (save) {
@@ -422,7 +497,6 @@ function enterConfigureMode() {
           saveAndRender();
           _isConfiguring = false;
           editor.setAttribute('hidden', '');
-          list.removeAttribute('hidden');
         } 
         else { 
           console.error('Invalid configuration JSON: missing players array');
@@ -443,16 +517,34 @@ function initConfigure() {
 
 function initListControls() {
   const list = el('scoreboard-list');
-  if (!list) return;
-  list.addEventListener('click', (ev) => {
-    const inc = ev.target.closest('.increase');
-    const dec = ev.target.closest('.decrease');
-    const item = ev.target.closest('.score-item');
-    if (!item) return;
-    const name = item.dataset.name;
-    if (inc) { changeScore(name, +1); }
-    else if (dec) { changeScore(name, -1); }
-  });
+  if (list) {
+    list.addEventListener('click', (ev) => {
+      const inc = ev.target.closest('.increase');
+      const dec = ev.target.closest('.decrease');
+      const item = ev.target.closest('.score-item');
+      if (!item) return;
+      const name = item.dataset.name;
+      if (inc) { changeScore(name, +1); }
+      else if (dec) { changeScore(name, -1); }
+    });
+  }
+
+  const duelBoard = el('seven-wonders-duel-scoreboard');
+  if (duelBoard) {
+    duelBoard.addEventListener('change', (ev) => {
+      const target = ev.target;
+      if (target.matches('input[type="number"]')) {
+        const playerIndex = target.dataset.playerIndex;
+        const category = target.dataset.category;
+        const value = Number(target.value);
+        if (state.players[playerIndex] && state.players[playerIndex]['play-details']) {
+            state.players[playerIndex]['play-details'][category] = value;
+            recalculateDuelScore(state.players[playerIndex]);
+            saveAndRender();
+        }
+      }
+    });
+  }
 }
 
 function initFinishGame() {
@@ -506,11 +598,12 @@ function initNewGame() {
     newGameSection.hidden = false;
     scoreboardList.hidden = true;
     configEditor.hidden = true;
+    el('seven-wonders-duel-scoreboard').hidden = true;
   });
 
   newGameDiscardBtn.addEventListener('click', () => {
     newGameSection.hidden = true;
-    scoreboardList.hidden = false;
+    render(); // Re-render to show correct board
   });
 
   gameTypeRadios.forEach(radio => {
@@ -533,17 +626,24 @@ function initNewGame() {
       }
       state.game = gameName;
       state.players = players;
-      saveAndRender();
-      newGameSection.hidden = true;
-      scoreboardList.hidden = false;
-    } 
-    else if (selectedType === 'duel') {
-      window.location.href = 'seven-wonders-duel.html';
-    } 
-    else if (selectedType === 'classic') {
+    } else if (selectedType === 'duel') {
+      state.game = '7 Wonders Duel';
+      const playDetails = {};
+      for(const categoryName in DUEL_CATEGORIES) {
+        playDetails[DUEL_CATEGORIES[categoryName]] = 0;
+      }
+      state.players = [
+        { name: 'Player 1', score: 0, 'play-details': {...playDetails} },
+        { name: 'Player 2', score: 0, 'play-details': {...playDetails} }
+      ];
+    } else if (selectedType === 'classic') {
       const numPlayers = el('classic-players').value;
       window.location.href = `seven-wonders.html?players=${numPlayers}`;
+      return; // prevent re-rendering
     }
+    
+    newGameSection.hidden = true;
+    saveAndRender();
   });
 }
 
@@ -553,13 +653,14 @@ document.addEventListener('DOMContentLoaded', () => {
   tpl = document.getElementById('score-item-template');
   load();
   if (!state.players || state.players.length === 0) {
-    state.players = DEFAULT_NAMES.map(n => ({ name: n, score: 0 }));
+    state.players = DEFAULT_NAMES.map(n => ({ name: n, score: 0, 'play-details': {}}));
     // ensure default celebration link exists
     if (typeof state.celebrationLink === 'undefined') state.celebrationLink = DEFAULT_CELEBRATION_LINK;
     save();
   }
   // if state exists but lacks celebrationLink, ensure default
   if (typeof state.celebrationLink === 'undefined') state.celebrationLink = DEFAULT_CELEBRATION_LINK;
+  
   render();
   initSidebar();
   initImportExport();
