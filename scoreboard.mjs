@@ -1,17 +1,94 @@
-// # Constants
+// Constants
 const LOCAL_STORAGE_KEY = 'scoreboard.v2'; // Use for local storage
-const DEFAULT_NAMES = ['Player #1', 'Player #2', 'Player #3', 'Player #4']; // Default participants (config)
-const DEFAULT_CELEBRATION_LINK = 'https://www.pellicciotta.com/cards/celebrate.html?message={{MESSAGE}}';
 const CLOUD_SAVE_URL = 'https://script.google.com/macros/s/AKfycbwW11Xm9k-4WTUNq7LbJcRaYxvDYdwSqit6Nna0_CEWYfIXCrzqTTbrPbvxjeBoUw6P/exec';
+
+// Default config choices
+const DEFAULT_NAMES = ['Player #1', 'Player #2', 'Player #3', 'Player #4']; // Default participants (config)
+const DEFAULT_AUTO_SORT = true; // Default auto-sort
+const DEFAULT_CELEBRATION_LINK = 'https://www.pellicciotta.com/cards/celebrate.html?message={{MESSAGE}}';
 const MARK_LAST = false; // Set to `true` to mark the lowest-ranked participant with `rank-last` styling
 
-let state = { players: [] };
+// Scoreboard state
+let state = { 
+              "game": "unknown",
+              "play-date": null,
+              "status": "ongoing",
+              "auto-sort": DEFAULT_AUTO_SORT,
+              "celebration-link": DEFAULT_CELEBRATION_LINK,
+              "players": DEFAULT_NAMES.map(n => ({ name: n, score: 0, 'play-details': {}})) 
+            };
 let tpl = null;
 let _isConfiguring = false;
 
-const el = (id) => document.getElementById(id);
-
 // # Persistence / Helpers
+
+function getConfigurationObject() {
+  return {
+    'game': state.game,
+    'players': state.players,
+    'auto-sort': Boolean(state['auto-sort']),
+    'celebration-link': state['celebration-link'] || DEFAULT_CELEBRATION_LINK
+  };
+}
+
+function createStateObject(status, updatePlayDate = true) {
+  const exportObj = {
+    'game': state['game'],
+    'play-date': updatePlayDate ? new Date().toISOString() : state['play-date'],
+    'status': status,
+    'auto-sort': Boolean(state['auto-sort']),
+    'celebration-link': state['celebration-link'] || DEFAULT_CELEBRATION_LINK,    
+    'players': state.players
+  };
+  return exportObj;
+}
+
+function loadStateObject(sourceObj) {
+  if (!sourceObj) return false;
+  let loaded = false;
+  if (sourceObj.players && Array.isArray(sourceObj.players)) {
+    state.players = [];
+    for (const pp of sourceObj.players) {
+      const name = String(pp.name || '').trim();
+      const score = Math.max(0, Number(pp.score) || 0);
+      const playDetails = pp.playDetails || pp['play-details'] || { };
+      if (name.length) {
+        state.players.push({ name, score, 'play-details': playDetails });
+      }
+    }
+    loaded = true;
+  }
+  if (sourceObj.game !== undefined) {
+    state.game = sourceObj.game || null;
+  }
+  if (sourceObj.status !== undefined) {
+    state.status = sourceObj.status || "ongoing";
+  }  
+  // Handle different key styles for play-date ('play-date' or 'playDate')
+  if (sourceObj['play-date'] !== undefined) {
+    state['play-date'] = sourceObj['play-date'] || new Date().toISOString();
+  }
+  else if (sourceObj.playDate !== undefined) {
+    state['play-date'] = sourceObj.playDate || new Date().toISOString();
+  }  
+  // Handle different key styles for auto-sort ('auto-sort' or 'autoSort')
+  if (sourceObj['auto-sort'] !== undefined) {
+    state['auto-sort'] = Boolean(sourceObj['auto-sort']);
+  } 
+  else if (sourceObj.autoSort !== undefined) {
+    state['auto-sort'] = Boolean(sourceObj.autoSort);
+  }
+  // Handle different key styles for celebration-link
+  if (sourceObj['celebration-link'] !== undefined) {
+    state['celebration-link'] = String(sourceObj['celebration-link']);
+  } 
+  else if (sourceObj.celebrationLink !== undefined) {
+    state['celebration-link'] = String(sourceObj.celebrationLink);
+  }  
+  return loaded;
+}
+
+const el = (id) => document.getElementById(id);
 
 function save() {
   try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state)); } catch (e) { console.warn('Failed to save', e) }
@@ -20,13 +97,23 @@ function save() {
 function load() {
   const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (raw) {
-    try { state = JSON.parse(raw); } catch (e) { state = { players: [] } }
+    try { 
+      loadStateObject(JSON.parse(raw));
+    } 
+    catch (e) { 
+      state = { players: [] }; 
+    }
   }
 }
 
-function saveAndRender() { save(); render(); }
+function saveAndRender() { 
+  save(); 
+  render(); 
+}
 
-function getPlayer(name) { return state.players.find(x => x.name === name); }
+function getPlayer(name) { 
+  return state.players.find(x => x.name === name); 
+}
 
 // # Rendering / ranking
 
@@ -45,11 +132,10 @@ function render() {
   if (!list) return;
   list.innerHTML = '';
   if (!tpl) { console.error('Template not found'); return; }
-  // decide ordering: auto-sort (default true) or preserve state order
-  const autoSort = (state.autoSort === undefined) ? true : Boolean(state.autoSort);
+  // Decide ordering: auto-sort (default true) or preserve state order
+  const autoSort = (state['auto-sort'] === undefined) ? true : Boolean(state['auto-sort']);
   const players = autoSort ? [...state.players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name)) : [...state.players];
-
-  // compute ranks from a sorted copy (so ranks reflect scores even when autoSort is off)
+  // Compute ranks from a sorted copy (so ranks reflect scores even when autoSort is off)
   const sortedForRank = [...state.players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name));
   const ranksByName = Object.create(null);
   let lastRank = 0;
@@ -91,10 +177,10 @@ function changeScore(name, delta) {
 // # Public API functions (for external, programmatic usage)
 
 export function setPlayers(names) {
-  // remove duplicates while preserving order
+  // Remove duplicates while preserving order
   const seen = new Set();
-  state.players = names.map(n => ({ name: n.trim(), score: 0 })).filter(p => p.name.length).filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; });
-  save(); render();
+  state.players = names.map(n => ({ name: n.trim(), score: 0, 'play-details': {}})).filter(p => p.name.length).filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; });
+  saveAndRender();
 }
 
 export function setScore(name, value) {
@@ -116,7 +202,7 @@ async function saveToCloud() {
   if (!btn) return;
   btn.disabled = true;
   try {
-    const exportObj = { players: state.players, 'auto-sort': Boolean(state.autoSort), 'celebration-link': state.celebrationLink || DEFAULT_CELEBRATION_LINK };
+    const exportObj = createStateObject('ongoing', true);
     const response = await fetch(CLOUD_SAVE_URL, {
       method: 'POST',
       mode: 'cors',
@@ -139,6 +225,28 @@ async function saveToCloud() {
   }
 }
 
+async function saveFinishedGameToCloud() {
+  try {
+    const exportObj = createStateObject('finished');
+    const response = await fetch(CLOUD_SAVE_URL, {
+      method: 'POST',
+      mode: 'cors',
+      body: JSON.stringify(exportObj, null, 2),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      }
+    });
+    const result = await response.json();
+    if (result.status !== 'success') {
+      throw new Error(result.message || 'Unknown error');
+    }
+    console.log('Finished game state saved to cloud!');
+  } 
+  catch (error) {
+    console.error('Failed to save finished game state to cloud:', error);
+  } 
+}
+
 async function loadFromCloud() {
   const btn = el('load-from-cloud');
   if (!btn) return;
@@ -149,10 +257,7 @@ async function loadFromCloud() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const parsed = await response.json();
-    if (parsed.players && Array.isArray(parsed.players)) {
-      state.players = parsed.players.map(pp => ({ name: String(pp.name || '').trim(), score: Math.max(0, Number(pp.score) || 0) })).filter(x => x.name.length);
-      if (parsed['auto-sort'] !== undefined) state.autoSort = Boolean(parsed['auto-sort']);
-      if (parsed['celebration-link'] !== undefined) state.celebrationLink = String(parsed['celebration-link']);
+    if (loadStateObject(parsed)) {
       saveAndRender();
       console.log('State loaded from cloud!');
     } 
@@ -169,25 +274,25 @@ async function loadFromCloud() {
 }
 
 function initCloudSave() {
-    const saveBtn = el('save-to-cloud');
-    const loadBtn = el('load-from-cloud');
-    if (saveBtn) saveBtn.addEventListener('click', saveToCloud);
-    if (loadBtn) loadBtn.addEventListener('click', loadFromCloud);
+  const saveBtn = el('save-to-cloud');
+  const loadBtn = el('load-from-cloud');
+  if (saveBtn) saveBtn.addEventListener('click', saveToCloud);
+  if (loadBtn) loadBtn.addEventListener('click', loadFromCloud);
 }
 
 function initSettings() {
   const btn = el('auto-sort-toggle');
   if (!btn) return;
-  // ensure state.autoSort exists (default true)
-  if (typeof state.autoSort === 'undefined') state.autoSort = true;
+  // ensure state['auto-sort'] exists (default true)
+  if (typeof state['auto-sort'] === 'undefined') state['auto-sort'] = true;
   const setUI = () => {
-    const on = Boolean(state.autoSort);
+    const on = Boolean(state['auto-sort']);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.classList.toggle('active', on);
   };
   setUI();
   btn.addEventListener('click', () => {
-    state.autoSort = !Boolean(state.autoSort);
+    state['auto-sort'] = !Boolean(state['auto-sort']);
     save();
     setUI();
     render();
@@ -215,7 +320,7 @@ function initSidebar() {
     setState(nowExpanded);
     sidebar.setAttribute('data-expanded', String(nowExpanded));
   });
-  // close the sidebar when any action button inside it is clicked
+  // Close the sidebar when any action button inside it is clicked
   const actionsContainer = sidebar.querySelector('.sidebar-actions');
   if (actionsContainer) {
     actionsContainer.addEventListener('click', (ev) => {
@@ -240,7 +345,7 @@ function initImportExport() {
 
   const exportBtn = el('export-json');
   if (exportBtn) exportBtn.addEventListener('click', () => {
-    const exportObj = { players: state.players, 'auto-sort': Boolean(state.autoSort), 'celebration-link': state.celebrationLink || DEFAULT_CELEBRATION_LINK };
+    const exportObj = createStateObject(state.status, false);
     const data = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -256,12 +361,7 @@ function initImportExport() {
       r.onload = () => {
         try {
           const parsed = JSON.parse(r.result);
-          if (parsed.players && Array.isArray(parsed.players)) {
-            state.players = parsed.players.map(pp => ({ name: String(pp.name || '').trim(), score: Math.max(0, Number(pp.score) || 0) })).filter(x => x.name.length);
-            if (parsed['auto-sort'] !== undefined) state.autoSort = Boolean(parsed['auto-sort']);
-            else if (parsed.autoSort !== undefined) state.autoSort = Boolean(parsed.autoSort);
-            if (parsed['celebration-link'] !== undefined) state.celebrationLink = String(parsed['celebration-link']);
-            else if (parsed.celebrationLink !== undefined) state.celebrationLink = String(parsed.celebrationLink);
+          if (loadStateObject(parsed)) {
             saveAndRender();
           } 
           else {
@@ -286,14 +386,13 @@ function enterConfigureMode() {
   const ta = el('config-textarea');
   if (!list || !editor || !ta) return;
   _isConfiguring = true;
-  // populate textarea with current configuration
-  const exportObj = { players: state.players, 'auto-sort': Boolean(state.autoSort), 'celebration-link': state.celebrationLink || DEFAULT_CELEBRATION_LINK };
+  // Populate textarea with current configuration
+  const exportObj = getConfigurationObject();
   ta.value = JSON.stringify(exportObj, null, 2);
-  // hide the list and show the editor
+  // Hide the list and show the editor
   list.setAttribute('hidden', '');
   editor.removeAttribute('hidden');
-
-  // wire up buttons (idempotent)
+  // Wire up buttons (idempotent)
   const discard = el('config-discard');
   const save = el('config-save');
   if (discard) {
@@ -308,12 +407,7 @@ function enterConfigureMode() {
     save.onclick = () => {
       try {
         const parsed = JSON.parse(ta.value);
-        if (parsed.players && Array.isArray(parsed.players)) {
-          state.players = parsed.players.map(pp => ({ name: String(pp.name || '').trim(), score: Math.max(0, Number(pp.score) || 0) })).filter(x => x.name.length);
-          if (parsed['auto-sort'] !== undefined) state.autoSort = Boolean(parsed['auto-sort']);
-          else if (parsed.autoSort !== undefined) state.autoSort = Boolean(parsed.autoSort);
-          if (parsed['celebration-link'] !== undefined) state.celebrationLink = String(parsed['celebration-link']);
-          else if (parsed.celebrationLink !== undefined) state.celebrationLink = String(parsed.celebrationLink);
+        if (loadStateObject(parsed)) {
           saveAndRender();
           _isConfiguring = false;
           editor.setAttribute('hidden', '');
@@ -353,7 +447,7 @@ function initListControls() {
 function initFinishGame() {
   const btn = el('finish-game');
   if (!btn) return;
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
     if (!state.players || state.players.length === 0) return;
     const scores = state.players.map(p => Number(p.score) || 0);
     const max = Math.max(...scores);
@@ -377,6 +471,7 @@ function initFinishGame() {
           finalUrl = 'celebration.html?s=10&msg=' + encoded;
         }
       }
+      await saveFinishedGameToCloud();
       window.open(finalUrl, '_blank', 'noopener');
   });
 }
@@ -403,4 +498,3 @@ document.addEventListener('DOMContentLoaded', () => {
   initFinishGame();
   initCloudSave();
 });
-

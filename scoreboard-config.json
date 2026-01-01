@@ -1,13 +1,16 @@
 {
-  "players": [
-    { "name": "Alyssa", "score": 0 },
-    { "name": "Evelien", "score": 0 },
-    { "name": "Alexander", "score": 0 },
-    { "name": "Erik", "score": 0 },
-    { "name": "Luca", "score": 0 },
-    { "name": "Noah", "score": 0 },
-    { "name": "Hilde", "score": 0 }
-  ],
+  "game": "Nieuwjaarsquiz 2025",
+  "play-date": "2025-12-31T18:30:30+01:00",
+  "status": "ongoing",
   "auto-sort": true,
-  "celebration-link": "celebration.html?s=10&msg={{MESSAGE}}"
+  "celebration-link": "celebration.html?s=10&msg={{MESSAGE}}",
+  "players": [
+    { "name": "Alyssa",    "score": 0, "play-details": { } },
+    { "name": "Evelien",   "score": 0, "play-details": { } },
+    { "name": "Alexander", "score": 0, "play-details": { } },
+    { "name": "Erik",      "score": 0, "play-details": { } },
+    { "name": "Luca",      "score": 0, "play-details": { } },
+    { "name": "Noah",      "score": 0, "play-details": { } },
+    { "name": "Hilde",     "score": 0, "play-details": { } }
+  ]
 }
