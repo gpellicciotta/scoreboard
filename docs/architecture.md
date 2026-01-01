@@ -7,11 +7,13 @@ This document outlines the high-level architecture of the Hinolugi Scoreboard ap
 The application is a lightweight, serverless web application with a vanilla JavaScript frontend and a Google Apps Script backend.
 
 ### Frontend
+
 A Single Page Application (SPA) built with plain JavaScript, HTML, and CSS. 
 The main entry point is `index.html`, which loads the application logic from `scoreboard.mjs`. 
 The state is managed in a simple JavaScript object and persisted in the browser's `localStorage` for session-to-session persistence.
 
 ### Backend
+
 A Google Apps Script (`scoreboard-backend.js`) acts as a simple, serverless backend. 
 It exposes `doGet` and `doPost` methods that are triggered by HTTP requests from the frontend. 
 It uses the Google Drive API (`DriveApp`) to store the scoreboard data as a JSON file (`last-saved-scoreboard.json`) in the user's Google Drive.
@@ -37,6 +39,7 @@ Here is the structure of the `state` object:
   ]
 }
 ```
+
 It exposes following properties:
 
 *   `game` (string | null): The name of the game being played.
