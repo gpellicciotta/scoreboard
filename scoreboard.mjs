@@ -117,6 +117,16 @@ function getPlayer(name) {
 
 // # Rendering / ranking
 
+function updateTitle() {
+  const titleEl = el('app-title');
+  if (!titleEl) return;
+  if (state.game && state.game.trim().length > 0) {
+    titleEl.textContent = `${state.game} Scores`;
+  } else {
+    titleEl.textContent = 'SCOREBOARD';
+  }
+}
+
 function applyRankClasses(li, score, rank, isLast) {
   li.classList.remove('rank-gold', 'rank-silver', 'rank-bronze', 'rank-last');
   if (score > 0) {
@@ -128,6 +138,7 @@ function applyRankClasses(li, score, rank, isLast) {
 }
 
 function render() {
+  updateTitle();
   const list = el('scoreboard-list');
   if (!list) return;
   list.innerHTML = '';
@@ -300,7 +311,7 @@ function initSettings() {
 }
 
 function initSidebar() {
-  const sidebar = el('scoreboard-sidebar');
+  const sidebar = el('app-sidebar');
   const sidebarToggle = el('sidebar-toggle') || el('header-toggle');
   if (!sidebar || !sidebarToggle) return;
   const icon = sidebarToggle.querySelector('i');
