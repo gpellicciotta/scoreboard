@@ -1,0 +1,6 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <title>Scoreboard Icon</title>
+  <rect width="32" height="32" fill="#1B1B1B"/>
+  <rect x="7" y="16" width="8" height="10" fill="#375dfb" rx="1"/> 
+  <rect x="17" y="10" width="8" height="16" fill="#fbbd08" rx="1"/>
+</svg>
