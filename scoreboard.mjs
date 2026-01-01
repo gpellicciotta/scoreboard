@@ -13,6 +13,16 @@ const DUEL_CATEGORIES = {
   'Military': 'military'
 };
 
+const CLASSIC_CATEGORIES = {
+  'Military': 'military',
+  'Coins': 'money-coins',
+  'Wonders': 'wonders',
+  'Civilian': 'blue-cards',
+  'Commercial': 'yellow-cards',
+  'Guilds': 'purple-cards',
+  'Science': 'green-cards'
+};
+
 // Default config choices
 const DEFAULT_NAMES = ['Player #1', 'Player #2', 'Player #3', 'Player #4']; // Default participants (config)
 const DEFAULT_AUTO_SORT = true; // Default auto-sort
@@ -152,14 +162,22 @@ function render() {
   updateTitle();
   const genericList = el('scoreboard-list');
   const duelBoard = el('seven-wonders-duel-scoreboard');
+  const classicBoard = el('seven-wonders-classic-scoreboard');
+
+  // Default to hiding all boards
+  genericList.hidden = true;
+  duelBoard.hidden = true;
+  classicBoard.hidden = true;
 
   if (state.game === '7 Wonders Duel') {
-    genericList.hidden = true;
     duelBoard.hidden = false;
     renderDuelScoreboard(duelBoard, state.players);
-  } else {
+  } else if (state.game === '7 Wonders') {
+    classicBoard.hidden = false;
+    renderClassicScoreboard(classicBoard, state.players);
+  }
+  else {
     genericList.hidden = false;
-    duelBoard.hidden = true;
     renderGenericList(genericList, state.players);
   }
 }
@@ -198,6 +216,21 @@ function renderGenericList(list, players) {
   });
 }
 
+function recalculateDuelScore(player) {
+  if (!player || !player['play-details']) return;
+  let total = 0;
+  for (const categoryName in DUEL_CATEGORIES) {
+    const category = DUEL_CATEGORIES[categoryName];
+    const value = Number(player['play-details'][category] || 0);
+    if (category === 'money-coins') {
+      total += Math.floor(value / 3);
+    } else {
+      total += value;
+    }
+  }
+  player.score = total;
+}
+
 function renderDuelScoreboard(container, players) {
   if (!container) return;
 
@@ -223,11 +256,11 @@ function renderDuelScoreboard(container, players) {
   });
 }
 
-function recalculateDuelScore(player) {
+function recalculateClassicScore(player) {
   if (!player || !player['play-details']) return;
   let total = 0;
-  for (const categoryName in DUEL_CATEGORIES) {
-    const category = DUEL_CATEGORIES[categoryName];
+  for (const categoryName in CLASSIC_CATEGORIES) {
+    const category = CLASSIC_CATEGORIES[categoryName];
     const value = Number(player['play-details'][category] || 0);
     if (category === 'money-coins') {
       total += Math.floor(value / 3);
@@ -236,6 +269,42 @@ function recalculateDuelScore(player) {
     }
   }
   player.score = total;
+}
+
+function renderClassicScoreboard(container, players) {
+  if (!container) return;
+
+  container.style.setProperty('--player-count', players.length);
+
+  // Update player names
+  for (let i = 0; i < 7; i++) {
+    const nameInput = container.querySelector(`.players input[data-player-index="${i}"]`);
+    if (nameInput) {
+      nameInput.value = players[i] ? players[i].name : '';
+      nameInput.style.display = i < players.length ? '' : 'none';
+    }
+  }
+
+  // Update sub-scores
+  for (const categoryName in CLASSIC_CATEGORIES) {
+    const category = CLASSIC_CATEGORIES[categoryName];
+    for (let i = 0; i < 7; i++) {
+      const scoreInput = container.querySelector(`input[data-player-index="${i}"][data-category="${category}"]`);
+      if (scoreInput) {
+        scoreInput.value = (players[i] && players[i]['play-details']) ? (players[i]['play-details'][category] || 0) : 0;
+        scoreInput.style.display = i < players.length ? '' : 'none';
+      }
+    }
+  }
+
+  // Update total scores
+  for (let i = 0; i < 7; i++) {
+    const sumInput = container.querySelector(`.sum input[data-player-index="${i}"]`);
+    if (sumInput) {
+      sumInput.value = players[i] ? players[i].score : 0;
+      sumInput.style.display = i < players.length ? '' : 'none';
+    }
+  }
 }
 
 // # Implementation Support
@@ -468,6 +537,7 @@ function enterConfigureMode() {
   if (_isConfiguring) return;
   const list = el('scoreboard-list');
   const duelBoard = el('seven-wonders-duel-scoreboard');
+  const classicBoard = el('seven-wonders-classic-scoreboard');
   const editor = el('config-editor');
   const ta = el('config-textarea');
   if (!list || !editor || !ta) return;
@@ -478,6 +548,7 @@ function enterConfigureMode() {
   // Hide the scoreboards and show the editor
   list.setAttribute('hidden', '');
   duelBoard.setAttribute('hidden', '');
+  classicBoard.setAttribute('hidden', '');
   editor.removeAttribute('hidden');
   // Wire up buttons (idempotent)
   const discard = el('config-discard');
@@ -545,6 +616,23 @@ function initListControls() {
       }
     });
   }
+
+  const classicBoard = el('seven-wonders-classic-scoreboard');
+  if (classicBoard) {
+    classicBoard.addEventListener('change', (ev) => {
+      const target = ev.target;
+      if (target.matches('input[type="number"]')) {
+        const playerIndex = target.dataset.playerIndex;
+        const category = target.dataset.category;
+        const value = Number(target.value);
+        if (state.players[playerIndex] && state.players[playerIndex]['play-details']) {
+            state.players[playerIndex]['play-details'][category] = value;
+            recalculateClassicScore(state.players[playerIndex]);
+            saveAndRender();
+        }
+      }
+    });
+  }
 }
 
 function initFinishGame() {
@@ -599,6 +687,7 @@ function initNewGame() {
     scoreboardList.hidden = true;
     configEditor.hidden = true;
     el('seven-wonders-duel-scoreboard').hidden = true;
+    el('seven-wonders-classic-scoreboard').hidden = true;
   });
 
   newGameDiscardBtn.addEventListener('click', () => {
@@ -621,8 +710,8 @@ function initNewGame() {
       const gameName = el('game-name').value || 'Generic Game';
       const numPlayers = parseInt(el('generic-players').value, 10);
       const players = [];
-      for (let i = 1; i <= numPlayers; i++) {
-        players.push({ name: `Player ${i}`, score: 0, 'play-details': {} });
+      for (let i = 0; i < numPlayers; i++) {
+        players.push({ name: `Player ${i + 1}`, score: 0, 'play-details': {} });
       }
       state.game = gameName;
       state.players = players;
@@ -637,9 +726,16 @@ function initNewGame() {
         { name: 'Player 2', score: 0, 'play-details': { ...playDetails } }
       ];
     } else if (selectedType === 'classic') {
-      const numPlayers = el('classic-players').value;
-      window.location.href = `seven-wonders.html?players=${numPlayers}`;
-      return; // prevent re-rendering
+      state.game = '7 Wonders';
+      const numPlayers = parseInt(el('classic-players').value, 10);
+      const playDetails = {};
+      for(const categoryName in CLASSIC_CATEGORIES) {
+        playDetails[CLASSIC_CATEGORIES[categoryName]] = 0;
+      }
+      state.players = [];
+      for (let i = 0; i < numPlayers; i++) {
+        state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
+      }
     }
 
     newGameSection.hidden = true;

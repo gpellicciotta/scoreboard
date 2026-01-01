@@ -149,6 +149,100 @@
       </div>
     </div>
 
+    <!-- Show 7 Wonders Classic game scores -->   
+    <div id="seven-wonders-classic-scoreboard" hidden>
+      <div class="row players">
+        <i></i>
+        <input type="text" class="player-1" data-player-index="0" data-type="name" readonly>
+        <input type="text" class="player-2" data-player-index="1" data-type="name" readonly>
+        <input type="text" class="player-3" data-player-index="2" data-type="name" readonly>
+        <input type="text" class="player-4" data-player-index="3" data-type="name" readonly>
+        <input type="text" class="player-5" data-player-index="4" data-type="name" readonly>
+        <input type="text" class="player-6" data-player-index="5" data-type="name" readonly>
+        <input type="text" class="player-7" data-player-index="6" data-type="name" readonly>
+      </div>
+      <div class="row sum">
+        <i title="Total Points">∑</i>
+        <input type="number" class="player-1" data-player-index="0" data-type="sum" readonly>
+        <input type="number" class="player-2" data-player-index="1" data-type="sum" readonly>
+        <input type="number" class="player-3" data-player-index="2" data-type="sum" readonly>
+        <input type="number" class="player-4" data-player-index="3" data-type="sum" readonly>
+        <input type="number" class="player-5" data-player-index="4" data-type="sum" readonly>
+        <input type="number" class="player-6" data-player-index="5" data-type="sum" readonly>
+        <input type="number" class="player-7" data-player-index="6" data-type="sum" readonly>
+      </div>
+      <div class="row military">
+        <img src="media/7-wonders-military-card.png" title="Military">
+        <input type="number" min="0" class="player-1" data-player-index="0" data-category="military">
+        <input type="number" min="0" class="player-2" data-player-index="1" data-category="military">
+        <input type="number" min="0" class="player-3" data-player-index="2" data-category="military">
+        <input type="number" min="0" class="player-4" data-player-index="3" data-category="military">
+        <input type="number" min="0" class="player-5" data-player-index="4" data-category="military">
+        <input type="number" min="0" class="player-6" data-player-index="5" data-category="military">
+        <input type="number" min="0" class="player-7" data-player-index="6" data-category="military">
+      </div>
+      <div class="row money-coins">
+        <img src="media/7-wonders-money-coin-card.png" title="Coins">
+        <input type="number" min="0" class="player-1" data-player-index="0" data-category="money-coins">
+        <input type="number" min="0" class="player-2" data-player-index="1" data-category="money-coins">
+        <input type="number" min="0" class="player-3" data-player-index="2" data-category="money-coins">
+        <input type="number" min="0" class="player-4" data-player-index="3" data-category="money-coins">
+        <input type="number" min="0" class="player-5" data-player-index="4" data-category="money-coins">
+        <input type="number" min="0" class="player-6" data-player-index="5" data-category="money-coins">
+        <input type="number" min="0" class="player-7" data-player-index="6" data-category="money-coins">
+      </div>
+      <div class="row wonders">
+        <img src="media/7-wonders-piramid-card.png" title="Wonders">
+        <input type="number" min="0" class="player-1" data-player-index="0" data-category="wonders">
+        <input type="number" min="0" class="player-2" data-player-index="1" data-category="wonders">
+        <input type="number" min="0" class="player-3" data-player-index="2" data-category="wonders">
+        <input type="number" min="0" class="player-4" data-player-index="3" data-category="wonders">
+        <input type="number" min="0" class="player-5" data-player-index="4" data-category="wonders">
+        <input type="number" min="0" class="player-6" data-player-index="5" data-category="wonders">
+        <input type="number" min="0" class="player-7" data-player-index="6" data-category="wonders">
+      </div>
+      <div class="row blue-cards">
+        <img src="media/7-wonders-blue-card.png" title="Civilian">
+        <input type="number" min="0" class="player-1" data-player-index="0" data-category="blue-cards">
+        <input type="number" min="0" class="player-2" data-player-index="1" data-category="blue-cards">
+        <input type="number" min="0" class="player-3" data-player-index="2" data-category="blue-cards">
+        <input type="number" min="0" class="player-4" data-player-index="3" data-category="blue-cards">
+        <input type="number" min="0" class="player-5" data-player-index="4" data-category="blue-cards">
+        <input type="number" min="0" class="player-6" data-player-index="5" data-category="blue-cards">
+        <input type="number" min="0" class="player-7" data-player-index="6" data-category="blue-cards">
+      </div>
+      <div class="row yellow-cards">
+          <img src="media/7-wonders-yellow-card.png" title="Commercial">
+          <input type="number" min="0" class="player-1" data-player-index="0" data-category="yellow-cards">
+          <input type="number" min="0" class="player-2" data-player-index="1" data-category="yellow-cards">
+          <input type="number" min="0" class="player-3" data-player-index="2" data-category="yellow-cards">
+          <input type="number" min="0" class="player-4" data-player-index="3" data-category="yellow-cards">
+          <input type="number" min="0" class="player-5" data-player-index="4" data-category="yellow-cards">
+          <input type="number" min="0" class="player-6" data-player-index="5" data-category="yellow-cards">
+          <input type="number" min="0" class="player-7" data-player-index="6" data-category="yellow-cards">
+      </div>
+      <div class="row purple-cards">
+          <img src="media/7-wonders-purple-card.png" title="Guilds">
+          <input type="number" min="0" class="player-1" data-player-index="0" data-category="purple-cards">
+          <input type="number" min="0" class="player-2" data-player-index="1" data-category="purple-cards">
+          <input type="number" min="0" class="player-3" data-player-index="2" data-category="purple-cards">
+          <input type="number" min="0" class="player-4" data-player-index="3" data-category="purple-cards">
+          <input type="number" min="0" class="player-5" data-player-index="4" data-category="purple-cards">
+          <input type="number" min="0" class="player-6" data-player-index="5" data-category="purple-cards">
+          <input type="number" min="0" class="player-7" data-player-index="6" data-category="purple-cards">
+      </div>
+      <div class="row green-cards">
+        <img src="media/7-wonders-green-card.png" title="Science">
+        <input type="number" min="0" class="player-1" data-player-index="0" data-category="green-cards">
+        <input type="number" min="0" class="player-2" data-player-index="1" data-category="green-cards">
+        <input type="number" min="0" class="player-3" data-player-index="2" data-category="green-cards">
+        <input type="number" min="0" class="player-4" data-player-index="3" data-category="green-cards">
+        <input type="number" min="0" class="player-5" data-player-index="4" data-category="green-cards">
+        <input type="number" min="0" class="player-6" data-player-index="5" data-category="green-cards">
+        <input type="number" min="0" class="player-7" data-player-index="6" data-category="green-cards">
+      </div>
+    </div>
+
     <!-- Configuration editor: hidden by default; shown when configuring -->
     <div id="config-editor" class="config-editor" hidden>
       <textarea id="config-textarea" aria-label="Configuration JSON"></textarea>
