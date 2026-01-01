@@ -626,9 +626,9 @@ function initListControls() {
         const category = target.dataset.category;
         const value = Number(target.value);
         if (state.players[playerIndex] && state.players[playerIndex]['play-details']) {
-            state.players[playerIndex]['play-details'][category] = value;
-            recalculateClassicScore(state.players[playerIndex]);
-            saveAndRender();
+          state.players[playerIndex]['play-details'][category] = value;
+          recalculateClassicScore(state.players[playerIndex]);
+          saveAndRender();
         }
       }
     });
@@ -729,12 +729,12 @@ function initNewGame() {
       state.game = '7 Wonders';
       const numPlayers = parseInt(el('classic-players').value, 10);
       const playDetails = {};
-      for(const categoryName in CLASSIC_CATEGORIES) {
+      for (const categoryName in CLASSIC_CATEGORIES) {
         playDetails[CLASSIC_CATEGORIES[categoryName]] = 0;
       }
       state.players = [];
       for (let i = 0; i < numPlayers; i++) {
-        state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
+        state.players.push({ name: `Player ${i + 1}`, score: 0, 'play-details': { ...playDetails } });
       }
     }
 
