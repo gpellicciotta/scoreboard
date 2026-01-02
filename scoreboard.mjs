@@ -1,3 +1,112 @@
+class CounterInput extends HTMLElement {
+    constructor() {
+        super();
+        this._value = 0;
+        this.minValue = 0;
+        this.maxValue = 99;
+    }
+
+    get value() {
+        return this._value;
+    }
+
+    set value(val) {
+        this._value = val;
+        this.setAttribute('value', val);
+        this.checkValue();
+    }
+
+    static get observedAttributes() {
+        return ['value', 'min', 'max'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        const value = parseInt(newValue, 10);
+        if (name === 'value') {
+            this._value = value;
+        } else if (name === 'min') {
+            this.minValue = value;
+        } else if (name === 'max') {
+            this.maxValue = value;
+        }
+        this.checkValue();
+    }
+
+    connectedCallback() {
+        this.attachShadow({ mode: "open" });
+        this.shadowRoot.innerHTML = `
+            <style>
+                :host { 
+                    display: inline-grid; 
+                    grid-template-columns: auto auto auto; 
+                    align-items: center; 
+                    gap: 0.25rem;
+                    border: 1px solid var(--muted-border);
+                    border-radius: 0.375rem;
+                    background: var(--config-editor-bg);
+                    padding: 0.25rem;
+                    width: fit-content;
+                }
+                button { 
+                    font-size: 1rem; 
+                    cursor: pointer; 
+                    background: var(--blue);
+                    color: var(--btn-contrast);
+                    border: none;
+                    border-radius: 0.25rem;
+                    width: 2em;
+                    height: 2em;
+                }
+                button:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                span.value { 
+                    text-align: center; 
+                    font-family: var(--monospace-font);
+                    width: 3em;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            </style>
+            <button class="minus">-</button>
+            <span class="value">0</span>
+            <button class="plus">+</button>
+        `;
+
+        this.minusButton = this.shadowRoot.querySelector('.minus');
+        this.plusButton = this.shadowRoot.querySelector('.plus');
+        this.valueEl = this.shadowRoot.querySelector('.value');
+
+        if (this.hasAttribute('min')) this.minValue = parseInt(this.getAttribute('min'), 10);
+        if (this.hasAttribute('max')) this.maxValue = parseInt(this.getAttribute('max'), 10);
+        if (this.hasAttribute('value')) {
+            this._value = parseInt(this.getAttribute('value'), 10);
+        } else {
+            this.setAttribute('value', this._value);
+        }
+
+
+        this.plusButton.addEventListener("click", () => {
+            this.value = Math.min(this.maxValue, this.value + 1);
+            this.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        this.minusButton.addEventListener("click", () => {
+            this.value = Math.max(this.minValue, this.value - 1);
+            this.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        this.checkValue();
+    }
+
+    checkValue() {
+        if (this.valueEl) this.valueEl.innerText = this.value;
+        if (this.minusButton) this.minusButton.disabled = this.value <= this.minValue;
+        if (this.plusButton) this.plusButton.disabled = this.value >= this.maxValue;
+    }
+}
+customElements.define("counter-input", CounterInput);
+
 // Constants
 const LOCAL_STORAGE_KEY = 'scoreboard.v2'; // Use for local storage
 const CLOUD_SAVE_URL = 'https://script.google.com/macros/s/AKfycbwW11Xm9k-4WTUNq7LbJcRaYxvDYdwSqit6Nna0_CEWYfIXCrzqTTbrPbvxjeBoUw6P/exec';
@@ -234,25 +343,42 @@ function recalculateDuelScore(player) {
 function renderDuelScoreboard(container, players) {
   if (!container) return;
 
+  const scores = players.map(p => p.score);
+  const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
+
   // Update player names
   players.forEach((p, i) => {
-    const nameInput = container.querySelector(`.players input[data-player-index="${i}"]`);
-    if (nameInput) nameInput.value = p.name;
+    const nameEl = container.querySelector(`span[data-player-index="${i}"][data-type="name"]`);
+    if (nameEl) {
+      nameEl.textContent = p.name;
+      if (p.score === maxScore && maxScore > 0) {
+        nameEl.classList.add('highest-score');
+      } else {
+        nameEl.classList.remove('highest-score');
+      }
+    }
   });
 
   // Update sub-scores
   for (const categoryName in DUEL_CATEGORIES) {
     const category = DUEL_CATEGORIES[categoryName];
     players.forEach((p, i) => {
-      const scoreInput = container.querySelector(`input[data-player-index="${i}"][data-category="${category}"]`);
+      const scoreInput = container.querySelector(`counter-input[data-player-index="${i}"][data-category="${category}"]`);
       if (scoreInput) scoreInput.value = p['play-details'][category] || 0;
     });
   }
 
   // Update total scores
   players.forEach((p, i) => {
-    const sumInput = container.querySelector(`.sum input[data-player-index="${i}"]`);
-    if (sumInput) sumInput.value = p.score;
+    const sumEl = container.querySelector(`span[data-player-index="${i}"][data-type="sum"]`);
+    if (sumEl) {
+      sumEl.textContent = p.score;
+      if (p.score === maxScore && maxScore > 0) {
+        sumEl.classList.add('highest-score');
+      } else {
+        sumEl.classList.remove('highest-score');
+      }
+    }
   });
 }
 
@@ -278,10 +404,10 @@ function renderClassicScoreboard(container, players) {
 
   // Update player names
   for (let i = 0; i < 7; i++) {
-    const nameInput = container.querySelector(`.players input[data-player-index="${i}"]`);
-    if (nameInput) {
-      nameInput.value = players[i] ? players[i].name : '';
-      nameInput.style.display = i < players.length ? '' : 'none';
+    const nameEl = container.querySelector(`span[data-player-index="${i}"][data-type="name"]`);
+    if (nameEl) {
+      nameEl.textContent = players[i] ? players[i].name : '';
+      nameEl.style.display = i < players.length ? '' : 'none';
     }
   }
 
@@ -289,7 +415,7 @@ function renderClassicScoreboard(container, players) {
   for (const categoryName in CLASSIC_CATEGORIES) {
     const category = CLASSIC_CATEGORIES[categoryName];
     for (let i = 0; i < 7; i++) {
-      const scoreInput = container.querySelector(`input[data-player-index="${i}"][data-category="${category}"]`);
+      const scoreInput = container.querySelector(`counter-input[data-player-index="${i}"][data-category="${category}"]`);
       if (scoreInput) {
         scoreInput.value = (players[i] && players[i]['play-details']) ? (players[i]['play-details'][category] || 0) : 0;
         scoreInput.style.display = i < players.length ? '' : 'none';
@@ -299,10 +425,10 @@ function renderClassicScoreboard(container, players) {
 
   // Update total scores
   for (let i = 0; i < 7; i++) {
-    const sumInput = container.querySelector(`.sum input[data-player-index="${i}"]`);
-    if (sumInput) {
-      sumInput.value = players[i] ? players[i].score : 0;
-      sumInput.style.display = i < players.length ? '' : 'none';
+    const sumEl = container.querySelector(`span[data-player-index="${i}"][data-type="sum"]`);
+    if (sumEl) {
+      sumEl.textContent = players[i] ? players[i].score : 0;
+      sumEl.style.display = i < players.length ? '' : 'none';
     }
   }
 }
@@ -604,7 +730,7 @@ function initListControls() {
   if (duelBoard) {
     duelBoard.addEventListener('change', (ev) => {
       const target = ev.target;
-      if (target.matches('input[type="number"]')) {
+      if (target.matches('counter-input')) {
         const playerIndex = target.dataset.playerIndex;
         const category = target.dataset.category;
         const value = Number(target.value);
@@ -621,14 +747,14 @@ function initListControls() {
   if (classicBoard) {
     classicBoard.addEventListener('change', (ev) => {
       const target = ev.target;
-      if (target.matches('input[type="number"]')) {
+      if (target.matches('counter-input')) {
         const playerIndex = target.dataset.playerIndex;
         const category = target.dataset.category;
         const value = Number(target.value);
         if (state.players[playerIndex] && state.players[playerIndex]['play-details']) {
-          state.players[playerIndex]['play-details'][category] = value;
-          recalculateClassicScore(state.players[playerIndex]);
-          saveAndRender();
+            state.players[playerIndex]['play-details'][category] = value;
+            recalculateClassicScore(state.players[playerIndex]);
+            saveAndRender();
         }
       }
     });
@@ -729,12 +855,12 @@ function initNewGame() {
       state.game = '7 Wonders';
       const numPlayers = parseInt(el('classic-players').value, 10);
       const playDetails = {};
-      for (const categoryName in CLASSIC_CATEGORIES) {
+      for(const categoryName in CLASSIC_CATEGORIES) {
         playDetails[CLASSIC_CATEGORIES[categoryName]] = 0;
       }
       state.players = [];
       for (let i = 0; i < numPlayers; i++) {
-        state.players.push({ name: `Player ${i + 1}`, score: 0, 'play-details': { ...playDetails } });
+        state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
       }
     }
 

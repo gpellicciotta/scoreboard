@@ -597,7 +597,7 @@ button.sidebar-toggle {
   font-weight: var(--font-weight-semibold);
 }
 
-.game-settings input {
+.game-settings input, .game-settings counter-input {
   padding: 0.5rem;
   border-radius: 0.375rem;
   border: 1px solid var(--muted-border);
@@ -617,87 +617,44 @@ button.sidebar-toggle {
   padding: 0.5rem 0.75rem;
 }
 
-#seven-wonders-duel-scoreboard:not([hidden]) {
+#seven-wonders-duel-scoreboard:not([hidden]),
+#seven-wonders-classic-scoreboard:not([hidden]) {
   display: grid;
-  grid-template-rows: repeat(10, 1fr);
   justify-content: center;
   gap: 0.25rem;
   max-width: 90vw;
   margin: 1rem auto;
 }
 
-#seven-wonders-duel-scoreboard .row {
-  display: grid;
-  grid-template-columns: 10rem repeat(2, 1fr);
-  align-items: stretch;
-  gap: 0.5rem;
-}
-
-#seven-wonders-duel-scoreboard .row:first-child {
-  padding-bottom: 0.5rem;
-}
-
-#seven-wonders-duel-scoreboard .row.sum {
-  padding-top: 0.25rem;
-  padding-bottom: 0.5rem;
-  font-weight: bold;
-  border-bottom: 1px solid var(--muted-border);
-  margin-bottom: 0.5rem;
-}
-
-#seven-wonders-duel-scoreboard .row img,
-#seven-wonders-duel-scoreboard .row i {
-  justify-self: center;
-  align-self: center;
-  text-align: center;
-  object-fit: contain;
-  height: 75%;
-  font-style: normal;
-  font-size: 1.5rem;
-}
-
-#seven-wonders-duel-scoreboard .row input {
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  border: 1px solid var(--muted-border);
-  background: var(--config-editor-bg);
-  color: var(--page-color);
-  font-family: var(--monospace-font);
-  text-align: right;
-}
-
-#seven-wonders-duel-scoreboard .row input[readonly] {
-  background: transparent;
-  border: none;
-  cursor: default;
-  opacity: 0.8;
-}
-
-#seven-wonders-duel-scoreboard .row.players input {
-  text-align: center;
-  font-weight: bold;
+#seven-wonders-duel-scoreboard:not([hidden]) {
+  grid-template-rows: repeat(10, 1fr);
 }
 
 #seven-wonders-classic-scoreboard:not([hidden]) {
-  display: grid;
   grid-template-rows: repeat(9, 1fr);
-  justify-content: center;
-  gap: 0.25rem;
-  max-width: 90vw;
-  margin: 1rem auto;
 }
 
+#seven-wonders-duel-scoreboard .row,
 #seven-wonders-classic-scoreboard .row {
   display: grid;
-  grid-template-columns: 10rem repeat(var(--player-count, 7), 1fr);
   align-items: stretch;
   gap: 0.5rem;
 }
 
+#seven-wonders-duel-scoreboard .row {
+  grid-template-columns: 10rem repeat(2, 1fr);
+}
+
+#seven-wonders-classic-scoreboard .row {
+  grid-template-columns: 10rem repeat(var(--player-count, 7), 1fr);
+}
+
+#seven-wonders-duel-scoreboard .row:first-child,
 #seven-wonders-classic-scoreboard .row:first-child {
   padding-bottom: 0.5rem;
 }
 
+#seven-wonders-duel-scoreboard .row.sum,
 #seven-wonders-classic-scoreboard .row.sum {
   padding-top: 0.25rem;
   padding-bottom: 0.5rem;
@@ -706,7 +663,9 @@ button.sidebar-toggle {
   margin-bottom: 0.5rem;
 }
 
+#seven-wonders-duel-scoreboard .row img,
 #seven-wonders-classic-scoreboard .row img,
+#seven-wonders-duel-scoreboard .row i,
 #seven-wonders-classic-scoreboard .row i {
   justify-self: center;
   align-self: center;
@@ -717,16 +676,29 @@ button.sidebar-toggle {
   font-size: 1.5rem;
 }
 
+#seven-wonders-duel-scoreboard .row input,
 #seven-wonders-classic-scoreboard .row input {
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  border: 1px solid var(--muted-border);
-  background: var(--config-editor-bg);
+  /* No padding or border here, it is on the host of the counter-input */
+  border: none;
+  background: transparent;
   color: var(--page-color);
   font-family: var(--monospace-font);
   text-align: right;
+  width: 100%;
 }
 
+#seven-wonders-duel-scoreboard .row counter-input,
+#seven-wonders-classic-scoreboard .row counter-input {
+  /* No padding or border here, it is on the host of the counter-input */
+  border: none;
+  background: transparent;
+  color: var(--page-color);
+  font-family: var(--monospace-font);
+  width: auto;
+  justify-self: end;
+}
+
+#seven-wonders-duel-scoreboard .row input[readonly],
 #seven-wonders-classic-scoreboard .row input[readonly] {
   background: transparent;
   border: none;
@@ -734,7 +706,20 @@ button.sidebar-toggle {
   opacity: 0.8;
 }
 
-#seven-wonders-classic-scoreboard .row.players input {
+#seven-wonders-duel-scoreboard .row.players span,
+#seven-wonders-classic-scoreboard .row.players span {
   text-align: center;
   font-weight: bold;
+}
+
+#seven-wonders-duel-scoreboard .row.sum span,
+#seven-wonders-classic-scoreboard .row.sum span {
+  text-align: center;
+  box-sizing: border-box;
+  padding: 0 2em;
+}
+
+#seven-wonders-duel-scoreboard .row .highest-score,
+#seven-wonders-classic-scoreboard .row .highest-score {
+  color: var(--rank-gold);
 }
