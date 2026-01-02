@@ -95,151 +95,139 @@
     <!-- Show generic game scores -->
     <ul id="scoreboard-list" class="scoreboard-list" aria-live="polite"></ul>
 
-    <!-- Show 7 Wonders Duel game scores -->
+    <!-- Show 7 Wonders Duel game scores (column-oriented markup) -->
     <div id="seven-wonders-duel-scoreboard" hidden>
-      <div class="row players">
-        <i></i>
-        <span class="player-1" data-player-index="0" data-type="name"></span>
-        <span class="player-2" data-player-index="1" data-type="name"></span>
-      </div>
-      <div class="row sum">
-        <i title="Total Points">∑</i>
-        <span class="player-1" data-player-index="0" data-type="sum"></span>
-        <span class="player-2" data-player-index="1" data-type="sum"></span>
-      </div>
-      <div class="row blue-cards">
-        <img src="media/7-wonders-blue-card.png" title="Civilian">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="blue-cards"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="blue-cards"></counter-input>
-      </div>
-      <div class="row green-cards">
-        <img src="media/7-wonders-green-card.png" title="Science">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="green-cards"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="green-cards"></counter-input>
-      </div>
-      <div class="row yellow-cards">
-        <img src="media/7-wonders-yellow-card.png" title="Commercial">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="yellow-cards"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="yellow-cards"></counter-input>
-      </div>
-      <div class="row purple-cards">
-        <img src="media/7-wonders-purple-card.png" title="Guilds">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="purple-cards"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="purple-cards"></counter-input>
-      </div>
-      <div class="row wonders">
-        <img src="media/7-wonders-piramid-card.png" title="Wonders">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="wonders"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="wonders"></counter-input>
-      </div>
-      <div class="row green-coins">
-        <img src="media/7-wonders-green-coin-card.png" title="Progress">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="green-coins"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="green-coins"></counter-input>
-      </div>
-      <div class="row money-coins">
-        <img src="media/7-wonders-money-coin-card.png" title="Coins">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="money-coins"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="money-coins"></counter-input>
-      </div>
-      <div class="row military">
-        <img src="media/7-wonders-military-card.png" title="Military">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="military"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="military"></counter-input>
+      <div class="columns duel-columns">
+        <div class="col icons" aria-hidden="true">
+          <i></i>
+          <i title="Total Points">∑</i>
+          <img src="media/7-wonders-blue-card.png" title="Civilian">
+          <img src="media/7-wonders-green-card.png" title="Science">
+          <img src="media/7-wonders-yellow-card.png" title="Commercial">
+          <img src="media/7-wonders-purple-card.png" title="Guilds">
+          <img src="media/7-wonders-piramid-card.png" title="Wonders">
+          <img src="media/7-wonders-green-coin-card.png" title="Progress">
+          <img src="media/7-wonders-money-coin-card.png" title="Coins">
+          <img src="media/7-wonders-military-card.png" title="Military">
+        </div>
+        <div class="col player" data-player-index="0">
+          <span data-player-index="0" data-type="name"></span>
+          <span data-player-index="0" data-type="sum"></span>
+          <counter-input min="0" data-player-index="0" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="green-cards"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="green-coins"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="military"></counter-input>
+        </div>
+        <div class="col player" data-player-index="1">
+          <span data-player-index="1" data-type="name"></span>
+          <span data-player-index="1" data-type="sum"></span>
+          <counter-input min="0" data-player-index="1" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="green-cards"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="green-coins"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="military"></counter-input>
+        </div>
       </div>
     </div>
 
-    <!-- Show 7 Wonders Classic game scores -->
+    <!-- Show 7 Wonders Classic game scores (column-oriented markup) -->
     <div id="seven-wonders-classic-scoreboard" hidden>
-      <div class="row players">
-        <i></i>
-        <span class="player-1" data-player-index="0" data-type="name"></span>
-        <span class="player-2" data-player-index="1" data-type="name"></span>
-        <span class="player-3" data-player-index="2" data-type="name"></span>
-        <span class="player-4" data-player-index="3" data-type="name"></span>
-        <span class="player-5" data-player-index="4" data-type="name"></span>
-        <span class="player-6" data-player-index="5" data-type="name"></span>
-        <span class="player-7" data-player-index="6" data-type="name"></span>
-      </div>
-      <div class="row sum">
-        <i title="Total Points">∑</i>
-        <span class="player-1" data-player-index="0" data-type="sum"></span>
-        <span class="player-2" data-player-index="1" data-type="sum"></span>
-        <span class="player-3" data-player-index="2" data-type="sum"></span>
-        <span class="player-4" data-player-index="3" data-type="sum"></span>
-        <span class="player-5" data-player-index="4" data-type="sum"></span>
-        <span class="player-6" data-player-index="5" data-type="sum"></span>
-        <span class="player-7" data-player-index="6" data-type="sum"></span>
-      </div>
-      <div class="row military">
-        <img src="media/7-wonders-military-card.png" title="Military">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="military"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="military"></counter-input>
-        <counter-input min="0" class="player-3" data-player-index="2" data-category="military"></counter-input>
-        <counter-input min="0" class="player-4" data-player-index="3" data-category="military"></counter-input>
-        <counter-input min="0" class="player-5" data-player-index="4" data-category="military"></counter-input>
-        <counter-input min="0" class="player-6" data-player-index="5" data-category="military"></counter-input>
-        <counter-input min="0" class="player-7" data-player-index="6" data-category="military"></counter-input>
-      </div>
-      <div class="row money-coins">
-        <img src="media/7-wonders-money-coin-card.png" title="Coins">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="money-coins"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="money-coins"></counter-input>
-        <counter-input min="0" class="player-3" data-player-index="2" data-category="money-coins"></counter-input>
-        <counter-input min="0" class="player-4" data-player-index="3" data-category="money-coins"></counter-input>
-        <counter-input min="0" class="player-5" data-player-index="4" data-category="money-coins"></counter-input>
-        <counter-input min="0" class="player-6" data-player-index="5" data-category="money-coins"></counter-input>
-        <counter-input min="0" class="player-7" data-player-index="6" data-category="money-coins"></counter-input>
-      </div>
-      <div class="row wonders">
-        <img src="media/7-wonders-piramid-card.png" title="Wonders">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="wonders"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="wonders"></counter-input>
-        <counter-input min="0" class="player-3" data-player-index="2" data-category="wonders"></counter-input>
-        <counter-input min="0" class="player-4" data-player-index="3" data-category="wonders"></counter-input>
-        <counter-input min="0" class="player-5" data-player-index="4" data-category="wonders"></counter-input>
-        <counter-input min="0" class="player-6" data-player-index="5" data-category="wonders"></counter-input>
-        <counter-input min="0" class="player-7" data-player-index="6" data-category="wonders"></counter-input>
-      </div>
-      <div class="row blue-cards">
-        <img src="media/7-wonders-blue-card.png" title="Civilian">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="blue-cards"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="blue-cards"></counter-input>
-        <counter-input min="0" class="player-3" data-player-index="2" data-category="blue-cards"></counter-input>
-        <counter-input min="0" class="player-4" data-player-index="3" data-category="blue-cards"></counter-input>
-        <counter-input min="0" class="player-5" data-player-index="4" data-category="blue-cards"></counter-input>
-        <counter-input min="0" class="player-6" data-player-index="5" data-category="blue-cards"></counter-input>
-        <counter-input min="0" class="player-7" data-player-index="6" data-category="blue-cards"></counter-input>
-      </div>
-      <div class="row yellow-cards">
+      <div class="columns classic-columns">
+        <div class="col icons" aria-hidden="true">
+          <i></i>
+          <i title="Total Points">∑</i>
+          <img src="media/7-wonders-military-card.png" title="Military">
+          <img src="media/7-wonders-money-coin-card.png" title="Coins">
+          <img src="media/7-wonders-piramid-card.png" title="Wonders">
+          <img src="media/7-wonders-blue-card.png" title="Civilian">
           <img src="media/7-wonders-yellow-card.png" title="Commercial">
-          <counter-input min="0" class="player-1" data-player-index="0" data-category="yellow-cards"></counter-input>
-          <counter-input min="0" class="player-2" data-player-index="1" data-category="yellow-cards"></counter-input>
-          <counter-input min="0" class="player-3" data-player-index="2" data-category="yellow-cards"></counter-input>
-          <counter-input min="0" class="player-4" data-player-index="3" data-category="yellow-cards"></counter-input>
-          <counter-input min="0" class="player-5" data-player-index="4" data-category="yellow-cards"></counter-input>
-          <counter-input min="0" class="player-6" data-player-index="5" data-category="yellow-cards"></counter-input>
-          <counter-input min="0" class="player-7" data-player-index="6" data-category="yellow-cards"></counter-input>
-      </div>
-      <div class="row purple-cards">
           <img src="media/7-wonders-purple-card.png" title="Guilds">
-          <counter-input min="0" class="player-1" data-player-index="0" data-category="purple-cards"></counter-input>
-          <counter-input min="0" class="player-2" data-player-index="1" data-category="purple-cards"></counter-input>
-          <counter-input min="0" class="player-3" data-player-index="2" data-category="purple-cards"></counter-input>
-          <counter-input min="0" class="player-4" data-player-index="3" data-category="purple-cards"></counter-input>
-          <counter-input min="0" class="player-5" data-player-index="4" data-category="purple-cards"></counter-input>
-          <counter-input min="0" class="player-6" data-player-index="5" data-category="purple-cards"></counter-input>
-          <counter-input min="0" class="player-7" data-player-index="6" data-category="purple-cards"></counter-input>
-      </div>
-      <div class="row green-cards">
-        <img src="media/7-wonders-green-card.png" title="Science">
-        <counter-input min="0" class="player-1" data-player-index="0" data-category="green-cards"></counter-input>
-        <counter-input min="0" class="player-2" data-player-index="1" data-category="green-cards"></counter-input>
-        <counter-input min="0" class="player-3" data-player-index="2" data-category="green-cards"></counter-input>
-        <counter-input min="0" class="player-4" data-player-index="3" data-category="green-cards"></counter-input>
-        <counter-input min="0" class="player-5" data-player-index="4" data-category="green-cards"></counter-input>
-        <counter-input min="0" class="player-6" data-player-index="5" data-category="green-cards"></counter-input>
-        <counter-input min="0" class="player-7" data-player-index="6" data-category="green-cards"></counter-input>
+          <img src="media/7-wonders-green-card.png" title="Science">
+        </div>
+        <div class="col player" data-player-index="0">
+          <span data-player-index="0" data-type="name"></span>
+          <span data-player-index="0" data-type="sum"></span>
+          <counter-input min="0" data-player-index="0" data-category="military"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="0" data-category="green-cards"></counter-input>
+        </div>
+        <div class="col player" data-player-index="1">
+          <span data-player-index="1" data-type="name"></span>
+          <span data-player-index="1" data-type="sum"></span>
+          <counter-input min="0" data-player-index="1" data-category="military"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="1" data-category="green-cards"></counter-input>
+        </div>
+        <div class="col player" data-player-index="2">
+          <span data-player-index="2" data-type="name"></span>
+          <span data-player-index="2" data-type="sum"></span>
+          <counter-input min="0" data-player-index="2" data-category="military"></counter-input>
+          <counter-input min="0" data-player-index="2" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="2" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="2" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="2" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="2" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="2" data-category="green-cards"></counter-input>
+        </div>
+        <div class="col player" data-player-index="3">
+          <span data-player-index="3" data-type="name"></span>
+          <span data-player-index="3" data-type="sum"></span>
+          <counter-input min="0" data-player-index="3" data-category="military"></counter-input>
+          <counter-input min="0" data-player-index="3" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="3" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="3" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="3" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="3" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="3" data-category="green-cards"></counter-input>
+        </div>
+        <div class="col player" data-player-index="4">
+          <span data-player-index="4" data-type="name"></span>
+          <span data-player-index="4" data-type="sum"></span>
+          <counter-input min="0" data-player-index="4" data-category="military"></counter-input>
+          <counter-input min="0" data-player-index="4" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="4" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="4" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="4" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="4" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="4" data-category="green-cards"></counter-input>
+        </div>
+        <div class="col player" data-player-index="5">
+          <span data-player-index="5" data-type="name"></span>
+          <span data-player-index="5" data-type="sum"></span>
+          <counter-input min="0" data-player-index="5" data-category="military"></counter-input>
+          <counter-input min="0" data-player-index="5" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="5" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="5" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="5" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="5" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="5" data-category="green-cards"></counter-input>
+        </div>
+        <div class="col player" data-player-index="6">
+          <span data-player-index="6" data-type="name"></span>
+          <span data-player-index="6" data-type="sum"></span>
+          <counter-input min="0" data-player-index="6" data-category="military"></counter-input>
+          <counter-input min="0" data-player-index="6" data-category="money-coins"></counter-input>
+          <counter-input min="0" data-player-index="6" data-category="wonders"></counter-input>
+          <counter-input min="0" data-player-index="6" data-category="blue-cards"></counter-input>
+          <counter-input min="0" data-player-index="6" data-category="yellow-cards"></counter-input>
+          <counter-input min="0" data-player-index="6" data-category="purple-cards"></counter-input>
+          <counter-input min="0" data-player-index="6" data-category="green-cards"></counter-input>
+        </div>
       </div>
     </div>
 

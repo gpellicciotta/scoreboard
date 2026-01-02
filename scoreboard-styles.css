@@ -240,17 +240,9 @@ body {
   height: 100vh;
   width: var(--sidebar-collapsed-width);
   max-width: 85vw;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--muted-border);
-  padding: 0;
   box-sizing: border-box;
   z-index: 80;
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  overflow: visible;
-  transition: width .22s cubic-bezier(.2, .8, .2, 1);
-  padding-top: var(--app-header-height);
 }
 
 .app-sidebar .sidebar-content {
@@ -732,4 +724,121 @@ counter-input {
 /* convenience */
 .row counter-input {
   justify-self: end
+}
+
+/* Column-oriented layout for the Seven Wonders boards */
+.columns {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.columns .col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: stretch;
+}
+
+.columns .col.icons {
+  width: 4.5rem;
+  align-items: center;
+}
+
+/* When the sidebar expands, move the main content over so the icons column
+   is not hidden behind the sidebar. Uses the sibling selector because the
+   sidebar is a sibling of the main content. */
+
+.columns .col.icons i,
+.columns .col.icons img {
+  width: 100%;
+  height: auto;
+  display: block;
+  text-align: center;
+}
+
+.columns .col.player {
+  min-width: 8rem;
+  max-width: 18rem;
+  box-sizing: border-box;
+}
+
+.columns .col.player span[data-type="name"] {
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.columns .col.player span[data-type="sum"] {
+  text-align: center;
+  font-weight: var(--font-weight-semibold);
+  border-bottom: 1px solid var(--muted-border);
+  padding-bottom: 0; /* remove bottom padding to align with sub-totals */
+  margin-bottom: 0; /* remove extra bottom gap to align rows precisely */
+}
+
+.columns .col.player counter-input {
+  align-self: end;
+}
+
+/* Responsive: stack columns vertically on narrow viewports */
+@media (max-width: 720px) {
+  /* Keep columns horizontally scrollable on small screens so multiple
+     player columns remain visible and can be panned/swiped. */
+  .columns {
+    flex-direction: row;
+    align-items: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Icons column stays a fixed narrow column */
+  .columns .col.icons {
+    flex: 0 0 3.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
+  /* Player columns become fixed-width flex items that can overflow horizontally */
+  .columns .col.player {
+    flex: 0 0 auto;
+    min-width: 7.5rem;
+    max-width: 12rem;
+  }
+
+  /* Ensure icons don't switch to horizontal flow on small screens */
+  .columns .col.icons img { max-height: 1.4rem; }
+}
+
+/* Ensure highest-score styling applies to new column markup */
+#seven-wonders-duel-scoreboard .highest-score,
+#seven-wonders-classic-scoreboard .highest-score {
+  color: var(--rank-gold);
+}
+
+/* Align icon cells and player cells: keep consistent row heights */
+.columns .col.icons > *,
+.columns .col.player > * {
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make icons smaller and centered so they visually align with counters */
+.columns .col.icons img {
+  max-height: 1.6rem;
+  width: auto;
+}
+
+/* Ensure counter-inputs align consistently inside player columns */
+.columns .col.player counter-input {
+  align-self: center;
 }
