@@ -401,13 +401,18 @@ function renderClassicScoreboard(container, players) {
   if (!container) return;
 
   container.style.setProperty('--player-count', players.length);
+  // Determine highest score (support ties)
+  const scores = players.map(p => Number(p && p.score) || 0);
+  const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
 
-  // Update player names
+  // Update player names and mark highest-score
   for (let i = 0; i < 7; i++) {
     const nameEl = container.querySelector(`span[data-player-index="${i}"][data-type="name"]`);
+    const player = players[i];
     if (nameEl) {
-      nameEl.textContent = players[i] ? players[i].name : '';
+      nameEl.textContent = player ? player.name : '';
       nameEl.style.display = i < players.length ? '' : 'none';
+      if (player && Number(player.score) === maxScore && maxScore > 0) nameEl.classList.add('highest-score'); else nameEl.classList.remove('highest-score');
     }
   }
 
@@ -423,12 +428,14 @@ function renderClassicScoreboard(container, players) {
     }
   }
 
-  // Update total scores
+  // Update total scores and mark highest-score
   for (let i = 0; i < 7; i++) {
     const sumEl = container.querySelector(`span[data-player-index="${i}"][data-type="sum"]`);
+    const player = players[i];
     if (sumEl) {
-      sumEl.textContent = players[i] ? players[i].score : 0;
+      sumEl.textContent = player ? player.score : 0;
       sumEl.style.display = i < players.length ? '' : 'none';
+      if (player && Number(player.score) === maxScore && maxScore > 0) sumEl.classList.add('highest-score'); else sumEl.classList.remove('highest-score');
     }
   }
 }
