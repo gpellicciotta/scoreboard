@@ -42,6 +42,16 @@
   --header-toggle-size: 2.75rem;
   --sidebar-expanded-width: 18rem;
   --sidebar-collapsed-width: 3rem;
+
+  /* Button / action colors */
+  --btn-hover: var(--blue);
+  --btn-active: #ffd700; /* gold */
+  --btn-hover-bg: rgba(37, 99, 235, 0.04);
+  --btn-active-bg: rgba(255, 215, 0, 0.08);
+
+  /* Ranking colors */
+  --rank-gold: #ffd700;
+  --rank-contrast-dark: #000000;
 }
 
 /* Base */
@@ -240,6 +250,9 @@ body {
   height: 100vh;
   width: var(--sidebar-collapsed-width);
   max-width: 85vw;
+  background: var(--sidebar-bg);
+  background-color: rgba(27,27,27,1);
+  border-right: 1px solid var(--muted-border);
   box-sizing: border-box;
   z-index: 80;
   display: flex;
@@ -251,6 +264,7 @@ body {
   gap: .5rem;
   align-items: stretch;
   padding: 1rem;
+  background: var(--sidebar-bg);
   transform: translateX(-100%);
   transition: transform .22s cubic-bezier(.2, .8, .2, 1);
 }
@@ -262,7 +276,11 @@ body {
 }
 
 .app-sidebar.expanded {
-  width: var(--sidebar-expanded-width)
+  /* Let the expanded sidebar size to its content (widest button),
+     but keep a sane maximum. Mobile rules override this. */
+  width: auto;
+  min-width: max-content;
+  max-width: 22rem;
 }
 
 .app-sidebar.expanded .sidebar-content {
@@ -291,6 +309,17 @@ body {
   padding-left: 0.25rem;
   color: var(--page-color);
   font-weight: var(--font-weight-normal)
+}
+
+/* Ensure sidebar button labels follow hover/active color variables
+   (higher specificity than the standalone .label rule) */
+.app-sidebar .sidebar-content button:hover .label,
+.app-sidebar .sidebar-content button:focus .label {
+  color: var(--btn-hover);
+}
+
+.app-sidebar .sidebar-content button:active .label {
+  color: var(--btn-active);
 }
 
 /* Header action buttons */
