@@ -65,6 +65,43 @@ function createStateObject(status, updatePlayDate = true) {
     'celebration-link': state['celebration-link'] || DEFAULT_CELEBRATION_LINK,
     'players': state.players
   };
+
+  // When exporting a finished game, ensure the players list is sorted
+  // with the winner(s) first and include a "rank" field for the
+  // first, second and third place participants (handling ties).
+  if (status === 'finished' && Array.isArray(exportObj.players)) {
+    // Compute ranks (1-based) taking ties into account
+    const sortedForRank = [...exportObj.players].slice().sort((a, b) =>
+      (Number(b.score) || 0) - (Number(a.score) || 0) || a.name.localeCompare(b.name)
+    );
+    const ranksByName = Object.create(null);
+    let lastRank = 0;
+    for (let i = 0; i < sortedForRank.length; i++) {
+      if (i === 0) lastRank = 1;
+      else lastRank = (Number(sortedForRank[i].score) || 0) === (Number(sortedForRank[i - 1].score) || 0) ? lastRank : i + 1;
+      ranksByName[sortedForRank[i].name] = lastRank;
+    }
+
+    // Sort players so winners (rank 1) appear first, then by rank, then score/name
+    const sortedPlayers = [...exportObj.players].slice().sort((a, b) => {
+      const ra = ranksByName[a.name] || Infinity;
+      const rb = ranksByName[b.name] || Infinity;
+      if (ra !== rb) return ra - rb; // lower rank (1) first
+      const sa = Number(a.score) || 0;
+      const sb = Number(b.score) || 0;
+      if (sb !== sa) return sb - sa;
+      return a.name.localeCompare(b.name);
+    });
+
+    // Add rank field for top three places (1,2,3) and produce shallow copies
+    exportObj.players = sortedPlayers.map(p => {
+      const copy = Object.assign({}, p);
+      const r = ranksByName[p.name];
+      if (r && r <= 3) copy.rank = r;
+      return copy;
+    });
+  }
+
   return exportObj;
 }
 
