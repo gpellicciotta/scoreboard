@@ -107,7 +107,7 @@ function doPost(e) {
       if (isNaN(parsed)) {
         parsed = new Date();
       }
-      let fileNameDate = playDateIso.replace(/:/g, '').replace(/\.\d{3}Z$/, '');
+      let fileNameDate = playDateIso.replace(/[:-]/g, '').replace(/\.\d{3}Z$/, '');
 
       const fileName = `final-scores-${fileNameDate}.json`;
       const fileContent = JSON.stringify(scoreboardData, null, 2);
