@@ -1,7 +1,9 @@
 import './counter-input.mjs';
 
 // Constants
-const LOCAL_STORAGE_KEY = 'scoreboard.v2'; // Use for local storage
+const APP_NAME = 'scoreboard';
+const APP_VERSION = `1.0.0`
+const LOCAL_STORAGE_KEY = `${APP_NAME}.v${APP_VERSION}`; // Use for local storage
 const CLOUD_SAVE_URL = 'https://script.google.com/macros/s/AKfycbwW11Xm9k-4WTUNq7LbJcRaYxvDYdwSqit6Nna0_CEWYfIXCrzqTTbrPbvxjeBoUw6P/exec';
 
 const DUEL_CATEGORIES = {
