@@ -77,8 +77,12 @@ function createStateObject(status, updatePlayDate = true) {
     const ranksByName = Object.create(null);
     let lastRank = 0;
     for (let i = 0; i < sortedForRank.length; i++) {
-      if (i === 0) lastRank = 1;
-      else lastRank = (Number(sortedForRank[i].score) || 0) === (Number(sortedForRank[i - 1].score) || 0) ? lastRank : i + 1;
+      if (i === 0) { 
+        lastRank = 1; 
+      }
+      else { 
+        lastRank = (Number(sortedForRank[i].score) || 0) === (Number(sortedForRank[i - 1].score) || 0) ? lastRank : i + 1;
+      }
       ranksByName[sortedForRank[i].name] = lastRank;
     }
 
