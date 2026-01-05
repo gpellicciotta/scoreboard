@@ -2,7 +2,7 @@ import './counter-input.mjs';
 
 // Constants
 const APP_NAME = 'scoreboard';
-const APP_VERSION = `1.0.1`
+const APP_VERSION = `1.2.0`
 const LOCAL_STORAGE_KEY = `${APP_NAME}.v${APP_VERSION}`; // Use for local storage
 const CLOUD_SAVE_URL = 'https://script.google.com/macros/s/AKfycbwW11Xm9k-4WTUNq7LbJcRaYxvDYdwSqit6Nna0_CEWYfIXCrzqTTbrPbvxjeBoUw6P/exec';
 
@@ -44,6 +44,8 @@ let state = {
 };
 let tpl = null;
 let _isConfiguring = false;
+let _listControlsInit = false;
+let _finishedGamesCache = []; // cached array of { fileName, data, date, gameName, winners }
 
 // # Persistence / Helpers
 
@@ -90,7 +92,7 @@ function createStateObject(status, updatePlayDate = true) {
     const sortedPlayers = [...exportObj.players].slice().sort((a, b) => {
       const ra = ranksByName[a.name] || Infinity;
       const rb = ranksByName[b.name] || Infinity;
-      if (ra !== rb) return ra - rb; // lower rank (1) first
+      if (ra !== rb) return ra - rb; // Lower rank (1) first
       const sa = Number(a.score) || 0;
       const sb = Number(b.score) || 0;
       if (sb !== sa) return sb - sa;
@@ -105,7 +107,6 @@ function createStateObject(status, updatePlayDate = true) {
       return copy;
     });
   }
-
   return exportObj;
 }
 
@@ -156,8 +157,96 @@ function loadStateObject(sourceObj) {
 
 const el = (id) => document.getElementById(id);
 
+// Simple view manager: mount templates into `app-content` and show/hide default views
+const appContent = () => el('app-content');
+const appToolbar = () => el('app-toolbar');
+const defaultViews = () => el('default-views');
+
+function showView(templateId, onMount) {
+  const app = appContent();
+  const tpl = document.getElementById(templateId);
+  if (!app || !tpl) {
+    return null;
+  }
+  // hide default views
+  const def = defaultViews(); 
+  if (def) { 
+    def.hidden = true;
+  }
+  // remove existing mounted view
+  const existing = document.getElementById('mounted-view'); 
+  if (existing) existing.remove();
+  // mount new view
+  const mount = document.createElement('div'); mount.id = 'mounted-view';
+  mount.appendChild(tpl.content.cloneNode(true));
+  app.appendChild(mount);
+  // transfer toolbar content into app-toolbar (which lives in header)
+  const toolbar = mount.querySelector('.view-toolbar');
+  const toolbarHost = appToolbar();
+  if (toolbarHost) {
+    toolbarHost.innerHTML = '';
+  }
+  if (toolbar && toolbarHost) {
+    // Move the toolbar's children into the app-toolbar (preserve event listeners)
+    while (toolbar.firstChild) {
+      toolbarHost.appendChild(toolbar.firstChild);
+    }
+    // Remove the now-empty toolbar wrapper from the mounted view
+    toolbar.remove();
+  }
+
+  // If the template provided a view-title, use it as the app title
+  let vt = mount.querySelector('.view-title');
+  if (!vt && toolbarHost) {
+    vt = toolbarHost.querySelector('.view-title');
+  }
+  if (vt) {
+    const titleEl = el('app-title');
+    if (titleEl) {
+      // For the generic scoreboard view, prepend the active game's name
+      // followed by a space; otherwise use the view-title text alone.
+      let titleText = vt.textContent || '';
+      if (templateId === 'tpl-generic' && state.game && String(state.game).trim().length) {
+        titleText = String(state.game).trim() + ' ' + titleText;
+      }
+      titleEl.textContent = titleText;
+    }
+    // Remove the view-title element from the DOM so it isn't preserved
+    // in the mounted view or toolbar; its text has been copied to the
+    // header title and the element itself is no longer needed.
+    if (vt.parentNode) vt.parentNode.removeChild(vt);
+  }
+  if (typeof onMount === 'function') {
+    onMount(mount);
+  }
+  return mount;
+}
+
+function closeView() {
+  const def = defaultViews(); 
+  if (def) {
+    def.hidden = false;
+  }
+  const mount = document.getElementById('mounted-view'); 
+  if (mount) {
+    mount.remove();
+  }
+  const toolbarHost = appToolbar(); 
+  if (toolbarHost) {
+    toolbarHost.innerHTML = '';
+  }
+  // Restore title based on current state
+  updateTitle();
+  render();
+}
+
 function save() {
-  try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state)); } catch (e) { console.warn('Failed to save', e) }
+  try { 
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state)); 
+  } 
+  catch (e) { 
+    console.warn('Failed to save', e) 
+  }
 }
 
 function load() {
@@ -185,10 +274,13 @@ function getPlayer(name) {
 
 function updateTitle() {
   const titleEl = el('app-title');
-  if (!titleEl) return;
+  if (!titleEl) {
+    return;
+  }
   if (state.game && state.game.trim().length > 0) {
     titleEl.textContent = `${state.game} Scores`;
-  } else {
+  } 
+  else {
     titleEl.textContent = 'SCOREBOARD';
   }
 }
@@ -204,61 +296,62 @@ function applyRankClasses(li, score, rank, isLast) {
 }
 
 function render() {
+  if (_isConfiguring) return;
   updateTitle();
-  const genericList = el('scoreboard-list');
-  const duelBoard = el('seven-wonders-duel-scoreboard');
-  const classicBoard = el('seven-wonders-classic-scoreboard');
-
-  // Default to hiding all boards
-  genericList.hidden = true;
-  duelBoard.hidden = true;
-  classicBoard.hidden = true;
-
-  if (state.game === '7 Wonders Duel') {
-    duelBoard.hidden = false;
-    renderDuelScoreboard(duelBoard, state.players);
-  } else if (state.game === '7 Wonders') {
-    classicBoard.hidden = false;
-    renderClassicScoreboard(classicBoard, state.players);
+  // Choose appropriate template based on current game
+  const game = state.game || '';
+  if (game === '7 Wonders Duel') {
+    showView('tpl-duel', (mount) => {
+      const container = mount.querySelector('#seven-wonders-duel-scoreboard');
+      renderDuelScoreboard(container, state.players || []);
+    });
+  }
+  else if (game === '7 Wonders') {
+    showView('tpl-classic', (mount) => {
+      const container = mount.querySelector('#seven-wonders-classic-scoreboard');
+      renderClassicScoreboard(container, state.players || []);
+    });
   }
   else {
-    genericList.hidden = false;
-    renderGenericList(genericList, state.players);
-  }
-}
+    showView('tpl-generic', (mount) => {
+      const list = mount.querySelector('#scoreboard-list');
+      // render generic list: reuse existing rendering logic
+      if (list && tpl) {
+        list.innerHTML = '';
+        // Compute ranks taking ties into account so we can style top-3
+        const sorted = [...state.players].slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || a.name.localeCompare(b.name));
+        const ranksByName = Object.create(null);
+        let lastRank = 0;
+        for (let i = 0; i < sorted.length; i++) {
+          if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i-1].score) || 0) ? lastRank : i + 1;
+          ranksByName[sorted[i].name] = lastRank;
+        }
+        const isLastByName = {};
+        if (MARK_LAST && state.players.length) {
+          const minScore = Math.min(...state.players.map(p => Number(p.score) || 0));
+          state.players.filter(p => (Number(p.score) || 0) === minScore).forEach(p => { isLastByName[p.name] = true; });
+        }
 
-function renderGenericList(list, players) {
-  if (!list) return;
-  list.innerHTML = '';
-  if (!tpl) { console.error('Template not found'); return; }
-  // Decide ordering: auto-sort (default true) or preserve state order
-  const autoSort = (state['auto-sort'] === undefined) ? true : Boolean(state['auto-sort']);
-  const sortedPlayers = autoSort ? [...players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name)) : [...players];
-  // Compute ranks from a sorted copy (so ranks reflect scores even when autoSort is off)
-  const sortedForRank = [...players].sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name));
-  const ranksByName = Object.create(null);
-  let lastRank = 0;
-  for (let i = 0; i < sortedForRank.length; i++) {
-    if (i === 0) lastRank = 1;
-    else lastRank = (sortedForRank[i].score === sortedForRank[i - 1].score) ? lastRank : i + 1;
-    ranksByName[sortedForRank[i].name] = lastRank;
-  }
-  const maxRank = sortedForRank.length ? ranksByName[sortedForRank[sortedForRank.length - 1].name] : 1;
+        // If auto-sort is enabled, render the sorted list; otherwise preserve insertion order
+        const renderPlayers = Boolean(state['auto-sort']) ? sorted : state.players;
 
-  sortedPlayers.forEach((p, idx) => {
-    const rank = ranksByName[p.name] || 1;
-    const node = tpl.content.cloneNode(true);
-    const li = node.querySelector('.score-item');
-    if (!li) return;
-    li.dataset.name = p.name;
-    const nameEl = li.querySelector('.score-name');
-    const valueEl = li.querySelector('.score-value');
-    if (nameEl) nameEl.textContent = p.name;
-    if (valueEl) valueEl.textContent = p.score;
-    // apply ranking classes
-    applyRankClasses(li, p.score, rank, MARK_LAST && rank === maxRank && players.length > 1);
-    list.appendChild(node);
-  });
+        renderPlayers.forEach(p => {
+          const node = tpl.content.cloneNode(true);
+          const li = node.querySelector('.score-item');
+          if (!li) return;
+          li.dataset.name = p.name;
+          const nameEl = li.querySelector('.score-name');
+          const valueEl = li.querySelector('.score-value');
+          if (nameEl) nameEl.textContent = p.name;
+          if (valueEl) valueEl.textContent = p.score;
+          // apply rank classes
+          const rank = ranksByName[p.name] || null;
+          applyRankClasses(li, Number(p.score) || 0, rank, Boolean(isLastByName[p.name]));
+          list.appendChild(node);
+        });
+      }
+    });
+  }
 }
 
 function recalculateDuelScore(player) {
@@ -501,6 +594,9 @@ function initSettings() {
     const on = Boolean(state['auto-sort']);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.classList.toggle('active', on);
+    // Update visible label to reflect current behavior
+    const label = btn.querySelector('.label');
+    if (label) label.textContent = on ? "Don't Auto-Sort" : 'Auto-sort';
   };
   setUI();
   btn.addEventListener('click', () => {
@@ -583,9 +679,9 @@ function initImportExport() {
         try {
           const parsed = JSON.parse(r.result);
           if (loadStateObject(parsed)) {
-            el('new-game-section').hidden = true;
-            el('config-editor').hidden = true;
-            saveAndRender();
+            // Persist imported state then close any mounted view (closeView triggers render)
+            save();
+            try { closeView(); } catch (e) {}
           }
           else {
             console.error('Failed to import state from JSON file');
@@ -604,39 +700,25 @@ function initImportExport() {
 // # Configuration editor (opens JSON editor replacing participant list)
 function enterConfigureMode() {
   if (_isConfiguring) return;
-  const list = el('scoreboard-list');
-  const duelBoard = el('seven-wonders-duel-scoreboard');
-  const classicBoard = el('seven-wonders-classic-scoreboard');
-  const editor = el('config-editor');
-  const ta = el('config-textarea');
-  if (!list || !editor || !ta) return;
-  _isConfiguring = true;
-  // Populate textarea with current configuration
-  const exportObj = getConfigurationObject();
-  ta.value = JSON.stringify(exportObj, null, 2);
-  // Hide the scoreboards and show the editor
-  list.setAttribute('hidden', '');
-  duelBoard.setAttribute('hidden', '');
-  classicBoard.setAttribute('hidden', '');
-  editor.removeAttribute('hidden');
-  // Wire up buttons (idempotent)
-  const discard = el('config-discard');
-  const save = el('config-save');
-  if (discard) {
-    discard.onclick = () => {
-      _isConfiguring = false;
-      editor.setAttribute('hidden', '');
-      render(); // re-render to show correct board
-    };
-  }
-  if (save) {
-    save.onclick = () => {
+  showView('tpl-config-editor', (mount) => {
+    _isConfiguring = true;
+    const content = mount.querySelector('.view-content');
+    if (!content) return;
+    const ta = content.querySelector('#config-textarea');
+    // Buttons may be moved into the header's app-toolbar by showView();
+    const discard = content.querySelector('#config-discard') || (appToolbar() && appToolbar().querySelector('#config-discard'));
+    const save = content.querySelector('#config-save') || (appToolbar() && appToolbar().querySelector('#config-save'));
+    if (!ta) return;
+    // Populate textarea with current configuration
+    ta.value = JSON.stringify(getConfigurationObject(), null, 2);
+    if (discard) discard.onclick = () => { _isConfiguring = false; closeView(); };
+    if (save) save.onclick = () => {
       try {
         const parsed = JSON.parse(ta.value);
         if (loadStateObject(parsed)) {
           saveAndRender();
           _isConfiguring = false;
-          editor.setAttribute('hidden', '');
+          closeView();
         }
         else {
           console.error('Invalid configuration JSON: missing players array');
@@ -646,7 +728,7 @@ function enterConfigureMode() {
         console.error('Invalid configuration JSON: ' + e.message);
       }
     };
-  }
+  });
 }
 
 function initConfigure() {
@@ -656,52 +738,37 @@ function initConfigure() {
 }
 
 function initListControls() {
-  const list = el('scoreboard-list');
-  if (list) {
-    list.addEventListener('click', (ev) => {
-      const inc = ev.target.closest('.increase');
-      const dec = ev.target.closest('.decrease');
-      const item = ev.target.closest('.score-item');
-      if (!item) return;
-      const name = item.dataset.name;
-      if (inc) { changeScore(name, +1); }
-      else if (dec) { changeScore(name, -1); }
-    });
-  }
+  if (_listControlsInit) return;
+  _listControlsInit = true;
 
-  const duelBoard = el('seven-wonders-duel-scoreboard');
-  if (duelBoard) {
-    duelBoard.addEventListener('change', (ev) => {
-      const target = ev.target;
-      if (target.matches('counter-input')) {
-        const playerIndex = target.dataset.playerIndex;
-        const category = target.dataset.category;
-        const value = Number(target.value);
-        if (state.players[playerIndex] && state.players[playerIndex]['play-details']) {
-          state.players[playerIndex]['play-details'][category] = value;
-          recalculateDuelScore(state.players[playerIndex]);
-          saveAndRender();
-        }
-      }
-    });
-  }
+  // Delegate clicks for increase/decrease on generic list
+  document.addEventListener('click', (ev) => {
+    const inc = ev.target.closest('.increase');
+    const dec = ev.target.closest('.decrease');
+    const item = ev.target.closest('.score-item');
+    if (!item) return;
+    const name = item.dataset.name;
+    if (inc) { changeScore(name, +1); }
+    else if (dec) { changeScore(name, -1); }
+  });
 
-  const classicBoard = el('seven-wonders-classic-scoreboard');
-  if (classicBoard) {
-    classicBoard.addEventListener('change', (ev) => {
-      const target = ev.target;
-      if (target.matches('counter-input')) {
-        const playerIndex = target.dataset.playerIndex;
-        const category = target.dataset.category;
-        const value = Number(target.value);
-        if (state.players[playerIndex] && state.players[playerIndex]['play-details']) {
-            state.players[playerIndex]['play-details'][category] = value;
-            recalculateClassicScore(state.players[playerIndex]);
-            saveAndRender();
-        }
-      }
-    });
-  }
+  // Delegate change events for any counter-input across mounted views
+  document.addEventListener('change', (ev) => {
+    const target = ev.target;
+    if (!target || !target.matches('counter-input')) return;
+    const playerIndex = Number(target.dataset.playerIndex);
+    const category = target.dataset.category;
+    const value = Number(target.value);
+    if (Number.isNaN(playerIndex) || !category) return;
+    if (!state.players[playerIndex]) return;
+    // ensure play-details object
+    if (!state.players[playerIndex]['play-details']) state.players[playerIndex]['play-details'] = {};
+    state.players[playerIndex]['play-details'][category] = value;
+    // Recalculate according to which category set
+    if (Object.values(DUEL_CATEGORIES).includes(category)) recalculateDuelScore(state.players[playerIndex]);
+    if (Object.values(CLASSIC_CATEGORIES).includes(category)) recalculateClassicScore(state.players[playerIndex]);
+    saveAndRender();
+  });
 }
 
 function initFinishGame() {
@@ -738,77 +805,58 @@ function initFinishGame() {
 
 function initNewGame() {
   const newGameBtn = el('new-game');
-  const newGameSection = el('new-game-section');
-  const scoreboardList = el('scoreboard-list');
-  const configEditor = el('config-editor');
-
-  if (!newGameBtn || !newGameSection) return;
-
-  const newGameDiscardBtn = el('new-game-discard');
-  const newGameCreateBtn = el('new-game-create');
-  const gameTypeRadios = document.querySelectorAll('input[name="game-type"]');
-  const genericSettings = el('generic-game-settings');
-  const duelSettings = el('duel-game-settings');
-  const classicSettings = el('classic-game-settings');
-
+  if (!newGameBtn) return;
   newGameBtn.addEventListener('click', () => {
-    newGameSection.hidden = false;
-    scoreboardList.hidden = true;
-    configEditor.hidden = true;
-    el('seven-wonders-duel-scoreboard').hidden = true;
-    el('seven-wonders-classic-scoreboard').hidden = true;
-  });
+    showView('tpl-new-game', (mount) => {
+      const content = mount.querySelector('.view-content');
+      if (!content) return;
+      // Buttons may be moved into the header's app-toolbar by showView();
+      const newGameDiscardBtn = content.querySelector('#new-game-discard') || (appToolbar() && appToolbar().querySelector('#new-game-discard'));
+      const newGameCreateBtn = content.querySelector('#new-game-create') || (appToolbar() && appToolbar().querySelector('#new-game-create'));
+      const gameTypeRadios = content.querySelectorAll('input[name="game-type"]');
+      const genericSettings = content.querySelector('#generic-game-settings');
+      const duelSettings = content.querySelector('#duel-game-settings');
+      const classicSettings = content.querySelector('#classic-game-settings');
 
-  newGameDiscardBtn.addEventListener('click', () => {
-    newGameSection.hidden = true;
-    render(); // Re-render to show correct board
-  });
+      if (newGameDiscardBtn) newGameDiscardBtn.addEventListener('click', () => { closeView(); });
 
-  gameTypeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      genericSettings.hidden = radio.value !== 'generic';
-      duelSettings.hidden = radio.value !== 'duel';
-      classicSettings.hidden = radio.value !== 'classic';
+      gameTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          genericSettings.hidden = radio.value !== 'generic';
+          duelSettings.hidden = radio.value !== 'duel';
+          classicSettings.hidden = radio.value !== 'classic';
+        });
+      });
+
+      if (newGameCreateBtn) newGameCreateBtn.addEventListener('click', () => {
+        const selectedType = content.querySelector('input[name="game-type"]:checked').value;
+
+        if (selectedType === 'generic') {
+          const gameName = (content.querySelector('#game-name') && content.querySelector('#game-name').value) || 'Generic Game';
+          const numPlayers = parseInt((content.querySelector('#generic-players') && content.querySelector('#generic-players').value) || 2, 10);
+          const players = [];
+          for (let i = 0; i < numPlayers; i++) players.push({ name: `Player ${i + 1}`, score: 0, 'play-details': {} });
+          state.game = gameName;
+          state.players = players;
+        } else if (selectedType === 'duel') {
+          state.game = '7 Wonders Duel';
+          const playDetails = {};
+          for (const categoryName in DUEL_CATEGORIES) playDetails[DUEL_CATEGORIES[categoryName]] = 0;
+          state.players = [ { name: 'Player 1', score: 0, 'play-details': { ...playDetails } }, { name: 'Player 2', score: 0, 'play-details': { ...playDetails } } ];
+        } else if (selectedType === 'classic') {
+          state.game = '7 Wonders';
+          const numPlayers = parseInt((content.querySelector('#classic-players') && content.querySelector('#classic-players').value) || 3, 10);
+          const playDetails = {};
+          for (const categoryName in CLASSIC_CATEGORIES) playDetails[CLASSIC_CATEGORIES[categoryName]] = 0;
+          state.players = [];
+          for (let i = 0; i < numPlayers; i++) state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
+        }
+
+        // Persist state then close the new-game view which will trigger render
+        save();
+        closeView();
+      });
     });
-  });
-
-  newGameCreateBtn.addEventListener('click', () => {
-    const selectedType = document.querySelector('input[name="game-type"]:checked').value;
-
-    if (selectedType === 'generic') {
-      const gameName = el('game-name').value || 'Generic Game';
-      const numPlayers = parseInt(el('generic-players').value, 10);
-      const players = [];
-      for (let i = 0; i < numPlayers; i++) {
-        players.push({ name: `Player ${i + 1}`, score: 0, 'play-details': {} });
-      }
-      state.game = gameName;
-      state.players = players;
-    } else if (selectedType === 'duel') {
-      state.game = '7 Wonders Duel';
-      const playDetails = {};
-      for (const categoryName in DUEL_CATEGORIES) {
-        playDetails[DUEL_CATEGORIES[categoryName]] = 0;
-      }
-      state.players = [
-        { name: 'Player 1', score: 0, 'play-details': { ...playDetails } },
-        { name: 'Player 2', score: 0, 'play-details': { ...playDetails } }
-      ];
-    } else if (selectedType === 'classic') {
-      state.game = '7 Wonders';
-      const numPlayers = parseInt(el('classic-players').value, 10);
-      const playDetails = {};
-      for(const categoryName in CLASSIC_CATEGORIES) {
-        playDetails[CLASSIC_CATEGORIES[categoryName]] = 0;
-      }
-      state.players = [];
-      for (let i = 0; i < numPlayers; i++) {
-        state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
-      }
-    }
-
-    newGameSection.hidden = true;
-    saveAndRender();
   });
 }
 
@@ -835,4 +883,186 @@ document.addEventListener('DOMContentLoaded', () => {
   initFinishGame();
   initCloudSave();
   initNewGame();
+  initFinishedGames();
 });
+
+// # Finished games viewer
+async function fetchFinishedFiles() {
+  try {
+    const url = CLOUD_SAVE_URL + '?request=list';
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Network error');
+    const files = await resp.json();
+    const fileList = Array.isArray(files) ? files : [];
+    // Fetch each file's contents in parallel and build a metadata cache
+    const promises = fileList.map(async (fileName) => {
+      try {
+        const data = await loadFinishedFile(fileName);
+        const date = data && data['play-date'] ? new Date(data['play-date']) : null;
+        const gameName = data && data.game ? data.game : 'Unknown game';
+        let winners = [];
+        if (data && Array.isArray(data.players)) {
+          const scores = data.players.map(p => Number(p.score) || 0);
+          const max = scores.length ? Math.max(...scores) : 0;
+          winners = data.players.filter(p => (Number(p.score) || 0) === max).map(p => p.name);
+        }
+        return { fileName, data, date, gameName, winners };
+      }
+      catch (e) {
+        console.warn('Failed to load finished file', fileName, e);
+        return { fileName, data: null, date: null, gameName: 'Unknown', winners: [] };
+      }
+    });
+    const results = await Promise.all(promises);
+    // store cache sorted by date desc (fallback to filename)
+    _finishedGamesCache = results.slice().sort((a, b) => {
+      const ta = a.date ? a.date.getTime() : 0;
+      const tb = b.date ? b.date.getTime() : 0;
+      if (tb !== ta) return tb - ta;
+      return b.fileName.localeCompare(a.fileName);
+    });
+    return _finishedGamesCache;
+  }
+  catch (e) {
+    console.error('Failed to fetch finished files:', e);
+    _finishedGamesCache = [];
+    return [];
+  }
+}
+
+async function loadFinishedFile(fileName) {
+  try {
+    const url = CLOUD_SAVE_URL + '?request=load&file=' + encodeURIComponent(fileName);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Network error');
+    return await resp.json();
+  }
+  catch (e) {
+    console.error('Failed to load finished file:', e);
+    return null;
+  }
+}
+
+function renderFinishedList(files, container) {
+  if (!container) return;
+  container.innerHTML = '';
+  // container panel (visual grouping only)
+  const panel = document.createElement('div');
+  panel.className = 'finished-games-panel';
+
+  if (!files || files.length === 0) {
+    const p = document.createElement('div'); p.textContent = 'No finished games found.'; panel.appendChild(p); container.appendChild(panel); return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'finished-games-table';
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th>Date (ISO)</th><th>Game</th><th>Winner</th><th>Actions</th></tr>';
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+
+  files.forEach((entry) => {
+    const tr = document.createElement('tr');
+    const dateCell = document.createElement('td');
+    dateCell.textContent = entry.date ? entry.date.toISOString() : '';
+    const gameCell = document.createElement('td');
+    gameCell.textContent = entry.gameName || '';
+    const winnerCell = document.createElement('td');
+    winnerCell.textContent = entry.winners && entry.winners.length ? entry.winners.join(', ') : '';
+    const actionCell = document.createElement('td');
+    const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'View'; btn.className = 'view-finished-btn';
+    // Prepare a details row that can be inserted after the entry row
+    const detailsRow = document.createElement('tr');
+    const detailsCell = document.createElement('td');
+    detailsCell.colSpan = 4;
+    detailsCell.className = 'finished-game-details-cell';
+    detailsRow.appendChild(detailsCell);
+
+    btn.addEventListener('click', async () => {
+      // If already open, close it
+      if (btn.dataset.open === 'true') {
+        if (detailsRow.parentNode) detailsRow.parentNode.removeChild(detailsRow);
+        btn.textContent = 'View';
+        btn.dataset.open = '';
+        return;
+      }
+      // Load data (use cache if available)
+      const data = entry.data || await loadFinishedFile(entry.fileName);
+      if (!data) return;
+      // Build scoreboard content inside the details cell
+      detailsCell.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'finished-game-scoreboard';
+      const header = document.createElement('div');
+      header.style.marginBottom = '0.5rem';
+      header.textContent = `Finished: ${entry.gameName} — ${entry.date ? entry.date.toLocaleString() : ''}`;
+      wrapper.appendChild(header);
+      const players = Array.isArray(data.players) ? data.players : [];
+      const listWrap = document.createElement('div');
+      listWrap.className = 'finished-game-players';
+
+      // Compute ranks (1-based) taking ties into account and sort so winners appear first
+      const sorted = [...players].slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || a.name.localeCompare(b.name));
+      const ranksByName = Object.create(null);
+      let lastRank = 0;
+      for (let i = 0; i < sorted.length; i++) {
+        if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i-1].score) || 0) ? lastRank : i + 1;
+        ranksByName[sorted[i].name] = lastRank;
+      }
+      const isLastByName = {};
+      if (MARK_LAST && players.length) {
+        const minScore = Math.min(...players.map(p => Number(p.score) || 0));
+        players.filter(p => (Number(p.score) || 0) === minScore).forEach(p => { isLastByName[p.name] = true; });
+      }
+
+      // Render players in sorted order (winner first). Remove controls for finished games.
+      sorted.forEach(p => {
+        const node = tpl.content.cloneNode(true);
+        const li = node.querySelector('.score-item');
+        if (!li) return;
+        // Remove interactive controls for finished-game view
+        const controls = li.querySelector('.score-controls');
+        if (controls && controls.parentNode) controls.parentNode.removeChild(controls);
+        const nameEl = li.querySelector('.score-name');
+        const valueEl = li.querySelector('.score-value');
+        if (nameEl) nameEl.textContent = p.name;
+        if (valueEl) valueEl.textContent = p.score;
+        // apply rank classes (gold/silver/bronze)
+        const rank = ranksByName[p.name] || null;
+        applyRankClasses(li, Number(p.score) || 0, rank, Boolean(isLastByName[p.name]));
+        listWrap.appendChild(li);
+      });
+      wrapper.appendChild(listWrap);
+      detailsCell.appendChild(wrapper);
+      // Insert detailsRow after the entry row
+      if (tr.parentNode) tr.parentNode.insertBefore(detailsRow, tr.nextSibling);
+      btn.textContent = 'Close';
+      btn.dataset.open = 'true';
+    });
+    actionCell.appendChild(btn);
+    tr.appendChild(dateCell);
+    tr.appendChild(gameCell);
+    tr.appendChild(winnerCell);
+    tr.appendChild(actionCell);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  panel.appendChild(table);
+  container.appendChild(panel);
+}
+
+function initFinishedGames() {
+  const btn = el('list-finished-games');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    showView('tpl-finished-games', async (mount) => {
+      const content = mount.querySelector('.view-content');
+      const closeBtn = appToolbar() ? appToolbar().querySelector('#finished-games-close') : null;
+      const listContainer = content.querySelector('#finished-games-list');
+      const files = _finishedGamesCache.length ? _finishedGamesCache : await fetchFinishedFiles();
+      renderFinishedList(files, listContainer);
+      if (closeBtn) closeBtn.addEventListener('click', () => closeView());
+    });
+  });
+}

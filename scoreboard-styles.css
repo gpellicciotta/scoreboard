@@ -108,7 +108,121 @@ counter-input {
   display: flex;
   align-items: center;
   padding: 0 1rem;
-  z-index: 95;
+  z-index: 110;
+}
+
+/* App toolbar (contextual) — now rendered inside the header */
+.app-toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  z-index: 96;
+  background: transparent;
+  border-bottom: none;
+}
+
+/* Style toolbar buttons to match general action buttons (compact) */
+.app-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--muted-bg);
+  color: var(--page-color);
+  border: 1px solid var(--muted-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+}
+
+.app-toolbar button .label {
+  display: inline-block;
+  font-size: 0.95rem;
+}
+
+.app-toolbar button:hover {
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover);
+}
+
+.app-content {
+  padding-top: calc(var(--app-header-height) + 1rem);
+}
+
+/* Ensure mounted views fill the content area; config editor needs full height */
+#mounted-view,
+#mounted-view .view-content {
+  min-height: calc(100vh - var(--app-header-height) - 1rem);
+  box-sizing: border-box;
+  padding: 1rem;
+}
+
+/* When a view's toolbar is moved into the header, ensure content doesn't sit under it */
+#mounted-view .view-content {
+  padding-top: 0.5rem;
+}
+
+/* Mounted view layout: make view fill available content and allow flexible children */
+#mounted-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: calc(100vh - var(--app-header-height) - 1rem);
+}
+
+#mounted-view > .view-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: auto;
+}
+
+/* Configuration editor textarea should expand to fill the view-content area */
+#config-textarea {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 40vh;
+  resize: vertical;
+  font-family: var(--monospace-font);
+  background: var(--config-editor-bg);
+  color: var(--page-color);
+  border: 1px solid var(--muted-border);
+  padding: 0.75rem;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.config-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Style for New Game form: highlight the game name input with a blue border */
+#game-name {
+  border: 2px solid var(--blue);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--page-color);
+  outline: none;
+  box-shadow: 0 0 0 0 rgba(37,99,235,0.0);
+}
+
+#game-name:focus {
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+}
+
+.game-type-label {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: 0.25rem;
+  color: var(--page-color);
 }
 
 .app-header .app-title {
@@ -136,10 +250,7 @@ counter-input {
 }
 
 /* When sidebar is expanded, it overlays the main content instead of
-  shifting it — no margin-left adjustment. */
-.app-sidebar.expanded ~ .app-content {
-  /* Intentionally empty: sidebar overlays content. */
-}
+   shifting it — no margin-left adjustment. (Handled via absolute/fixed layout.) */
 
 /* Scoreboard list (generic) */
 .scoreboard-header {
@@ -279,7 +390,7 @@ counter-input {
   position: fixed;
   top: var(--app-header-height);
   left: 0;
-  height: calc(100vh - var(--app-header-height));
+  min-height: 100vh;
   width: var(--sidebar-collapsed-width);
   max-width: 85vw;
   background: var(--sidebar-bg);
@@ -535,6 +646,18 @@ button.sidebar-toggle {
     flex-direction: row-reverse
   }
 
+  /* Ensure the sidebar toggle (hamburger) remains visible in mobile
+     even though header uses row-reverse ordering. Position it at the
+     right side of the header for easy reach and above other toolbar items. */
+  .app-header .sidebar-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 120;
+    color: var(--page-color);
+  }
+
   .app-content {
     padding: 1rem 1rem calc(var(--app-header-height) + 1rem) 1rem;
     border-radius: 0
@@ -543,29 +666,38 @@ button.sidebar-toggle {
   .app-sidebar {
     max-width: 100vw;
     width: 100vw;
-    height: var(--sidebar-collapsed-width);
-    top: auto;
-    bottom: 0;
+    height: auto;
+    min-height: auto;
+    top: unset;
+    bottom: var(--app-header-height);
     left: 0;
     right: 0;
     border-right: none;
     border-top: 1px solid var(--muted-border);
     z-index: 99;
     transition: height .22s cubic-bezier(.2, .8, .2, 1);
-    padding-top: 0
   }
 
   .app-sidebar.expanded {
     height: auto;
     max-width: 100vw;
     width: 100vw
+    ;
+  }
+
+  /* When expanded on mobile, bring the sidebar above the footer/header
+     so bottom actions are not hidden. The hamburger toggle keeps a
+     higher z-index so it's still visible. */
+  .app-sidebar.expanded {
+    z-index: 115;
   }
 
   .app-sidebar .sidebar-content {
     transform: translateY(100%);
     padding-top: 1rem;
     flex-direction: row;
-    flex-wrap: wrap
+    flex-wrap: wrap;
+    overflow: auto;
   }
 
   .app-sidebar.expanded .sidebar-content {
@@ -650,6 +782,72 @@ button.sidebar-toggle {
 
 .new-game-buttons button {
   padding: 0.5rem 0.75rem
+}
+
+/* Finished games table / panel */
+#finished-games-section {
+  border: 1px solid var(--muted-border);
+  background: var(--config-editor-bg);
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.finished-games-panel {
+  border-radius: 6px;
+  padding: 0.5rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+  border: 1px solid rgba(255,255,255,0.02);
+}
+
+.finished-games-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.25rem;
+}
+.finished-games-table th,
+.finished-games-table td {
+  border-bottom: 1px solid var(--muted-border);
+  padding: 0.5rem 0.5rem;
+  text-align: left;
+  font-size: var(--font-size-small);
+}
+.finished-games-table th {
+  color: var(--page-color);
+  opacity: 0.9;
+}
+.finished-games-table th,
+.finished-games-table td {
+  border-bottom: 1px solid var(--muted-border);
+  padding: 0.5rem 0.5rem;
+  text-align: left;
+  font-size: var(--font-size-small);
+}
+.finished-games-table th {
+  color: var(--page-color);
+  opacity: 1;
+  background: rgba(255,255,255,0.02);
+  font-weight: 700;
+}
+.finished-games-table tr td button.view-finished-btn {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* Toolbar for finished-games section */
+.finished-games-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.finished-games-toolbar h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.finished-games-toolbar-right button {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
 }
 
 /* Seven Wonders boards (common) */
