@@ -986,7 +986,7 @@ button.sidebar-toggle {
 }
 
 .columns .col.player counter-input {
-  align-self: end;
+  align-self: center;
 }
 
 /* Ensure highest-score styling applies to new column markup */
@@ -1075,17 +1075,35 @@ button.sidebar-toggle {
   vertical-align: middle;
 }
 
-/* Duel grid / alignment tweaks: ensure icons, counters and buttons share row height */
-.columns.duel-columns {
-  display: flex; /* keep simple visual ordering: icons + player columns */
-  gap: 1rem;
-  align-items: flex-start;
+/* Duel grid / alignment: layout the entire Duel scoreboard as a single grid so
+   the icons column and player columns align perfectly by row. The icons column
+   remains a regular grid cell (so sticky positioning still works); player
+   columns use `display: contents` so their children participate in the
+   parent grid and line up across columns. */
+#seven-wonders-duel-scoreboard.columns.duel-columns {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: var(--icons-col-width) 1fr 1fr;
+  grid-template-rows: auto auto repeat(8, auto); /* name, sum, blue, green, yellow, purple, wonders, green-coins, money, military */
+  column-gap: 1rem;
+  row-gap: 0.375rem;
+  align-items: center;
+  align-content: start;
 }
-.columns.duel-columns > .col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
+
+/* The icons and player containers are just that: containers. They should not participate in the grid themselves. */
+.columns.duel-columns > .col.icons,
+.columns.duel-columns > .col.player {
+  display: contents;
 }
+
+/* Center common elements inside their grid cells */
+.columns.duel-columns > .col.icons > *,
+.columns.duel-columns > .col.player > * {
+  justify-self: center;
+  align-self: center;
+}
+
 /* Ensure the icons column images match the control height */
 .columns.duel-columns > .col.icons img {
   width: 1.6rem;
@@ -1104,12 +1122,17 @@ counter-input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--counter-btn-size);
-  height: var(--counter-btn-size);
   padding: 0;
 }
 
 .input-with-toggle { gap: 0.5rem; }
+
+/* Placeholder used to align counter-inputs with duel toggle buttons */
+.duel-toggle-placeholder {
+  display: inline-flex;
+  padding: 0;  
+  pointer-events: none;
+}
 
 /* Ensure total/sum aligns vertically with counters */
 .columns.duel-columns [data-type="sum"] {
@@ -1117,6 +1140,37 @@ counter-input {
   align-items: center;
   min-height: var(--counter-btn-size);
   padding: 0 0.25rem;
+}
+
+/* Make the input-with-toggle a 3-cell grid so left placeholder and right
+   toggle button take equal flexible space and the counter sits centered. */
+.columns.duel-columns .input-with-toggle {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 0.5rem;
+  width: 100%;
+}
+
+/* Place individual children into grid cells and align their content */
+.columns.duel-columns .input-with-toggle > .duel-toggle-placeholder {
+  grid-column: 1;
+  justify-self: end; /* move placeholder content to the right edge */
+}
+.columns.duel-columns .input-with-toggle > counter-input {
+  grid-column: 2;
+  justify-self: center;
+}
+.columns.duel-columns .input-with-toggle > button.duel-victory-toggle {
+  grid-column: 3;
+  justify-self: start; /* align the button to the left of its cell */
+}
+
+/* Force toggle buttons to remain visually flat: no background, no border, no shadow. */
+.columns.duel-columns .input-with-toggle > button.duel-victory-toggle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Small screens: reduce icon sizes slightly to preserve layout */
