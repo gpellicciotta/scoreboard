@@ -1001,3 +1001,83 @@ button.sidebar-toggle {
 .columns .col.player counter-input {
   align-self: center;
 }
+
+.duel-victory-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+}
+.input-with-toggle { display: inline-flex; align-items: center; gap: 0.25rem; }
+.duel-victory-toggle {
+  background: transparent;
+  border: none;
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.duel-victory-toggle img {
+  width: 1.6rem;
+  height: auto;
+  display: block;
+}
+.duel-victory-toggle:hover { opacity: 0.9; }
+.duel-victory-toggle:focus { outline: 2px solid rgba(255,255,255,0.08); }
+.duel-victory-toggle.active img {
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
+}
+.duel-victory-badge img {
+  width: 1.1rem;
+  height: auto;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+/* Duel grid / alignment tweaks: ensure icons, counters and buttons share row height */
+.columns.duel-columns {
+  display: flex; /* keep simple visual ordering: icons + player columns */
+  gap: 1rem;
+  align-items: flex-start;
+}
+.columns.duel-columns > .col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+/* Ensure the icons column images match the control height */
+.columns.duel-columns > .col.icons img {
+  width: 1.6rem;
+  height: auto;
+  display: block;
+}
+
+/* Make counter-inputs use consistent inline layout and centering */
+counter-input {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Size the victory toggle to match counter button size */
+.duel-victory-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--counter-btn-size);
+  height: var(--counter-btn-size);
+  padding: 0;
+}
+
+.input-with-toggle { gap: 0.5rem; }
+
+/* Ensure total/sum aligns vertically with counters */
+.columns.duel-columns span[data-type="sum"] {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--counter-btn-size);
+  padding: 0 0.25rem;
+}
+
+/* Small screens: reduce icon sizes slightly to preserve layout */
+@media (max-width: 520px) {
+  .duel-victory-toggle img { width: 1.4rem; }
+  .columns.duel-columns > .col.icons img { width: 1.4rem; }
+  .duel-victory-badge img { width: 0.95rem; }
+}

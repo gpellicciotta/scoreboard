@@ -104,6 +104,8 @@ function createStateObject(status, updatePlayDate = true) {
       const copy = Object.assign({}, p);
       const r = ranksByName[p.name];
       if (r && r <= 3) copy.rank = r;
+      // For Duel games, `play-details` will include `victory-type` when
+      // applicable (values: 'points', 'military domination', 'scientific domination').
       return copy;
     });
   }
@@ -356,6 +358,12 @@ function render() {
 
 function recalculateDuelScore(player) {
   if (!player || !player['play-details']) return;
+  // Immediate victory indicated by `victory-type` in play-details
+  const vt = String(player['play-details']['victory-type'] || '').toLowerCase();
+  if (vt === 'military domination' || vt === 'scientific domination') {
+    player.score = 1000;
+    return;
+  }
   let total = 0;
   for (const categoryName in DUEL_CATEGORIES) {
     const category = DUEL_CATEGORIES[categoryName];
@@ -379,7 +387,20 @@ function renderDuelScoreboard(container, players) {
   players.forEach((p, i) => {
     const nameEl = container.querySelector(`span[data-player-index="${i}"][data-type="name"]`);
     if (nameEl) {
+      // Show player name and badge if immediate victory occurred (via play-details.victory-type)
       nameEl.textContent = p.name;
+      // remove any existing badge
+      const existingBadge = nameEl.parentNode && nameEl.parentNode.querySelector('.duel-victory-badge');
+      if (existingBadge) existingBadge.remove();
+      const vt = (p['play-details'] && p['play-details']['victory-type']) ? String(p['play-details']['victory-type']) : '';
+      if (vt === 'military domination' || vt === 'scientific domination') {
+        const img = document.createElement('img');
+        img.className = 'duel-victory-badge';
+        img.alt = vt;
+        img.title = (vt === 'military domination') ? 'Military Domination' : 'Scientific Domination';
+        img.src = (vt === 'military domination') ? 'media/7-wonders-military-card.png' : 'media/7-wonders-green-coin-card.png';
+        nameEl.parentNode.insertBefore(img, nameEl.nextSibling);
+      }
       if (p.score === maxScore && maxScore > 0) {
         nameEl.classList.add('highest-score');
       } else {
@@ -394,6 +415,15 @@ function renderDuelScoreboard(container, players) {
     players.forEach((p, i) => {
       const scoreInput = container.querySelector(`counter-input[data-player-index="${i}"][data-category="${category}"]`);
       if (scoreInput) scoreInput.value = p['play-details'][category] || 0;
+      // Update victory toggle state for inputs that represent military/science
+      if (category === 'military' || category === 'green-coins') {
+        const victoryKind = category === 'military' ? 'military domination' : 'scientific domination';
+        const btn = container.querySelector(`button.duel-victory-toggle[data-player-index="${i}"][data-victory="${category === 'military' ? 'military' : 'science'}"]`);
+        if (btn) {
+          const vt = (p['play-details'] && p['play-details']['victory-type']) ? String(p['play-details']['victory-type']) : 'points';
+          if (vt === victoryKind) btn.classList.add('active'); else btn.classList.remove('active');
+        }
+      }
     });
   }
 
@@ -839,20 +869,23 @@ function initNewGame() {
           for (let i = 0; i < numPlayers; i++) players.push({ name: `Player ${i + 1}`, score: 0, 'play-details': {} });
           state.game = gameName;
           state.players = players;
-        } else if (selectedType === 'duel') {
+        }
+        else if (selectedType === 'duel') {
           state.game = '7 Wonders Duel';
           const playDetails = {};
           for (const categoryName in DUEL_CATEGORIES) playDetails[DUEL_CATEGORIES[categoryName]] = 0;
           state.players = [ { name: 'Player 1', score: 0, 'play-details': { ...playDetails } }, { name: 'Player 2', score: 0, 'play-details': { ...playDetails } } ];
-        } else if (selectedType === 'classic') {
+        } 
+        else if (selectedType === 'classic') {
           state.game = '7 Wonders';
           const numPlayers = parseInt((content.querySelector('#classic-players') && content.querySelector('#classic-players').value) || 3, 10);
           const playDetails = {};
           for (const categoryName in CLASSIC_CATEGORIES) playDetails[CLASSIC_CATEGORIES[categoryName]] = 0;
           state.players = [];
-          for (let i = 0; i < numPlayers; i++) state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
+          for (let i = 0; i < numPlayers; i++) {
+            state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
+          }
         }
-
         // Persist state then close the new-game view which will trigger render
         save();
         closeView();
@@ -969,7 +1002,31 @@ function renderFinishedList(files, container) {
     const gameCell = document.createElement('td');
     gameCell.textContent = entry.gameName || '';
     const winnerCell = document.createElement('td');
-    winnerCell.textContent = entry.winners && entry.winners.length ? entry.winners.join(', ') : '';
+    if (entry.winners && entry.winners.length) {
+      // Build DOM: winner name plus icon for victory-type when present
+      for (let wi = 0; wi < entry.winners.length; wi++) {
+        const w = entry.winners[wi];
+        try {
+          const player = entry.data && Array.isArray(entry.data.players) ? entry.data.players.find(p => p.name === w) : null;
+          const vt = player && player['play-details'] && player['play-details']['victory-type'] ? player['play-details']['victory-type'] : (player && player.playDetails && player.playDetails['victory-type'] ? player.playDetails['victory-type'] : null);
+          const span = document.createElement('span'); span.textContent = w;
+          winnerCell.appendChild(span);
+          if (vt === 'military domination' || vt === 'scientific domination') {
+            const img = document.createElement('img');
+            img.className = 'duel-victory-badge';
+            img.alt = vt;
+            img.title = (vt === 'military domination') ? 'Military Domination' : 'Scientific Domination';
+            img.src = (vt === 'military domination') ? 'media/7-wonders-military-card.png' : 'media/7-wonders-green-coin-card.png';
+            winnerCell.appendChild(img);
+          }
+          if (wi < entry.winners.length - 1) winnerCell.appendChild(document.createTextNode(', '));
+        }
+        catch (e) { winnerCell.appendChild(document.createTextNode(w + (wi < entry.winners.length - 1 ? ', ' : ''))); }
+      }
+    }
+    else {
+      winnerCell.textContent = '';
+    }
     const actionCell = document.createElement('td');
     const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'View'; btn.className = 'view-finished-btn';
     // Prepare a details row that can be inserted after the entry row
@@ -1026,7 +1083,19 @@ function renderFinishedList(files, container) {
         if (controls && controls.parentNode) controls.parentNode.removeChild(controls);
         const nameEl = li.querySelector('.score-name');
         const valueEl = li.querySelector('.score-value');
-        if (nameEl) nameEl.textContent = p.name;
+        if (nameEl) {
+          nameEl.textContent = p.name;
+          // Show victory-type badge if present in finished game's play-details
+          const pd = p['play-details'] || p.playDetails || {};
+          if (pd['victory-type'] === 'military domination' || pd['victory-type'] === 'scientific domination') {
+            const img = document.createElement('img');
+            img.className = 'duel-victory-badge';
+            img.alt = pd['victory-type'];
+            img.title = pd['victory-type'] === 'military domination' ? 'Military Domination' : 'Scientific Domination';
+            img.src = pd['victory-type'] === 'military domination' ? 'media/7-wonders-military-card.png' : 'media/7-wonders-green-coin-card.png';
+            nameEl.parentNode.insertBefore(img, nameEl.nextSibling);
+          }
+        }
         if (valueEl) valueEl.textContent = p.score;
         // apply rank classes (gold/silver/bronze)
         const rank = ranksByName[p.name] || null;

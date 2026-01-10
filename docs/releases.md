@@ -7,7 +7,7 @@
 
 ## Releases
 
-### v1.0.1 - Not released yet
+### v1.1.0 - Not released yet
 - Bug fix to how cloud file naming for finished games is handled
 - UI improvement: no longer shift scoreboard when expanding sidebar
 - Making sure ranks are stored when finishing a game
