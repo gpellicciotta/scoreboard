@@ -629,7 +629,8 @@ function initSidebar() {
     sidebar.setAttribute('data-expanded', String(nowExpanded));
   });
   // Close the sidebar when any action button inside it is clicked
-  const actionsContainer = sidebar.querySelector('.sidebar-actions');
+  // Actions container might now be the sidebar itself (classes moved to aside)
+  const actionsContainer = (sidebar.matches && sidebar.matches('.sidebar-actions')) ? sidebar : sidebar.querySelector('.sidebar-actions');
   if (actionsContainer) {
     actionsContainer.addEventListener('click', (ev) => {
       const btn = ev.target.closest('button');

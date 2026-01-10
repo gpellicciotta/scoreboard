@@ -390,7 +390,8 @@ counter-input {
   position: fixed;
   top: var(--app-header-height);
   left: 0;
-  min-height: 100vh;
+  /* limit sidebar height to viewport minus header so it doesn't overflow */
+  min-height: calc(100vh - var(--app-header-height));
   width: var(--sidebar-collapsed-width);
   max-width: 85vw;
   background: var(--sidebar-bg);
@@ -400,7 +401,8 @@ counter-input {
   display: flex;
 }
 
-.app-sidebar .sidebar-content {
+.app-sidebar .sidebar-content,
+.app-sidebar.sidebar-content {
   display: flex;
   flex-direction: column;
   gap: .5rem;
@@ -411,7 +413,8 @@ counter-input {
   transition: transform .22s cubic-bezier(.2, .8, .2, 1);
 }
 
-.app-sidebar.collapsed .sidebar-content {
+.app-sidebar.collapsed .sidebar-content,
+.app-sidebar.collapsed.sidebar-content {
   transform: translateX(-100%);
   visibility: hidden;
   pointer-events: none
@@ -425,13 +428,16 @@ counter-input {
   max-width: 22rem;
 }
 
-.app-sidebar.expanded .sidebar-content {
+.app-sidebar.expanded .sidebar-content,
+.app-sidebar.expanded.sidebar-content {
   transform: translateX(0);
   visibility: visible;
   pointer-events: auto
 }
 
-.app-sidebar .sidebar-content button {
+.app-sidebar .sidebar-content button,
+.app-sidebar.sidebar-content > button,
+.app-sidebar.sidebar-actions > button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -439,12 +445,16 @@ counter-input {
   width: 100%
 }
 
-.app-sidebar .sidebar-content button i {
+.app-sidebar .sidebar-content button i,
+.app-sidebar.sidebar-content > button i,
+.app-sidebar.sidebar-actions > button i {
   width: 1.25rem;
   text-align: center
 }
 
-.app-sidebar .sidebar-content .label {
+.app-sidebar .sidebar-content .label,
+.app-sidebar.sidebar-content > .label,
+.app-sidebar.sidebar-actions > .label {
   flex: 1 1 auto;
   text-align: left;
   font-size: var(--font-size-small);
@@ -667,7 +677,7 @@ button.sidebar-toggle {
     max-width: 100vw;
     width: 100vw;
     height: auto;
-    min-height: auto;
+    min-height: 0;
     top: unset;
     bottom: var(--app-header-height);
     left: 0;
@@ -692,7 +702,29 @@ button.sidebar-toggle {
     z-index: 115;
   }
 
-  .app-sidebar .sidebar-content {
+  /* When collapsed on mobile, keep the sidebar visually compact (only header-height tall)
+     so it doesn't obscure most of the viewport while still allowing the hamburger toggle. */
+  .app-sidebar.collapsed {
+    height: var(--app-header-height) !important;
+    min-height: 0 !important;
+    top: unset !important;
+    bottom: var(--app-header-height) !important;
+    overflow: hidden !important; /* clip the hidden sidebar content */
+  }
+
+  /* Ensure collapsed sidebar content is hidden and non-interactive on mobile.
+     Also handle the case where the sidebar action classes live on the <aside>
+     itself (e.g. `.app-sidebar.sidebar-content`). */
+  .app-sidebar.collapsed .sidebar-content,
+  .app-sidebar.collapsed.sidebar-content,
+  .app-sidebar.collapsed.sidebar-actions {
+    transform: translateY(100%);
+    pointer-events: none;
+  }
+
+  .app-sidebar .sidebar-content,
+  .app-sidebar.sidebar-content,
+  .app-sidebar.sidebar-actions {
     transform: translateY(100%);
     padding-top: 1rem;
     flex-direction: row;
@@ -700,12 +732,17 @@ button.sidebar-toggle {
     overflow: auto;
   }
 
-  .app-sidebar.expanded .sidebar-content {
-    transform: translateY(0)
+  .app-sidebar.expanded .sidebar-content,
+  .app-sidebar.expanded.sidebar-content,
+  .app-sidebar.expanded.sidebar-actions {
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
-  .app-sidebar.collapsed .sidebar-content {
-    transform: translateY(100%)
+  .app-sidebar.collapsed .sidebar-content,
+  .app-sidebar.collapsed.sidebar-content,
+  .app-sidebar.collapsed.sidebar-actions {
+    transform: translateY(100%);
   }
 }
 
