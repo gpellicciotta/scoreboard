@@ -385,26 +385,30 @@ function renderDuelScoreboard(container, players) {
 
   // Update player names
   players.forEach((p, i) => {
-    const nameEl = container.querySelector(`span[data-player-index="${i}"][data-type="name"]`);
-    if (nameEl) {
-      // Show player name and badge if immediate victory occurred (via play-details.victory-type)
-      nameEl.textContent = p.name;
-      // remove any existing badge
-      const existingBadge = nameEl.parentNode && nameEl.parentNode.querySelector('.duel-victory-badge');
-      if (existingBadge) existingBadge.remove();
+    // select the element that represents the name by attribute (tag may vary)
+    const nameHost = container.querySelector(`[data-player-index="${i}"][data-type="name"]`);
+    if (nameHost) {
+      // find the inner span used for the visible name, if present
+      const nameSpan = nameHost.querySelector('span') || nameHost;
+      // set the displayed name without disturbing sibling icons/images
+      nameSpan.textContent = p.name;
+      // Determine victory-type but do not insert textual badges; icons + column classes handle visuals
       const vt = (p['play-details'] && p['play-details']['victory-type']) ? String(p['play-details']['victory-type']) : '';
-      if (vt === 'military domination' || vt === 'scientific domination') {
-        const img = document.createElement('img');
-        img.className = 'duel-victory-badge';
-        img.alt = vt;
-        img.title = (vt === 'military domination') ? 'Military Domination' : 'Scientific Domination';
-        img.src = (vt === 'military domination') ? 'media/7-wonders-military-card.png' : 'media/7-wonders-green-coin-card.png';
-        nameEl.parentNode.insertBefore(img, nameEl.nextSibling);
-      }
       if (p.score === maxScore && maxScore > 0) {
-        nameEl.classList.add('highest-score');
+        nameSpan.classList.add('highest-score');
       } else {
-        nameEl.classList.remove('highest-score');
+        nameSpan.classList.remove('highest-score');
+      }
+      // Ensure the player column reflects any immediate victory via CSS class
+      const playerCol = container.querySelector(`.col.player[data-player-index="${i}"]`);
+      if (playerCol) {
+        playerCol.classList.toggle('military-victory', vt === 'military domination');
+        playerCol.classList.toggle('scientific-victory', vt === 'scientific domination');
+        // remove both classes when normal points
+        if (vt === 'points' || !vt) {
+          playerCol.classList.remove('military-victory');
+          playerCol.classList.remove('scientific-victory');
+        }
       }
     }
   });
@@ -429,8 +433,9 @@ function renderDuelScoreboard(container, players) {
 
   // Update total scores
   players.forEach((p, i) => {
-    const sumEl = container.querySelector(`span[data-player-index="${i}"][data-type="sum"]`);
-    if (sumEl) {
+    const sumHost = container.querySelector(`[data-player-index="${i}"][data-type="sum"]`);
+    if (sumHost) {
+      const sumEl = sumHost.querySelector('span') || sumHost;
       sumEl.textContent = p.score;
       if (p.score === maxScore && maxScore > 0) {
         sumEl.classList.add('highest-score');
@@ -466,12 +471,13 @@ function renderClassicScoreboard(container, players) {
 
   // Update player names and mark highest-score
   for (let i = 0; i < 7; i++) {
-    const nameEl = container.querySelector(`span[data-player-index="${i}"][data-type="name"]`);
+    const nameHost = container.querySelector(`[data-player-index="${i}"][data-type="name"]`);
     const player = players[i];
-    if (nameEl) {
-      nameEl.textContent = player ? player.name : '';
-      nameEl.style.display = i < players.length ? '' : 'none';
-      if (player && Number(player.score) === maxScore && maxScore > 0) nameEl.classList.add('highest-score'); else nameEl.classList.remove('highest-score');
+    if (nameHost) {
+      const nameSpan = nameHost.querySelector('span') || nameHost;
+      nameSpan.textContent = player ? player.name : '';
+      nameSpan.style.display = i < players.length ? '' : 'none';
+      if (player && Number(player.score) === maxScore && maxScore > 0) nameSpan.classList.add('highest-score'); else nameSpan.classList.remove('highest-score');
     }
   }
 
@@ -489,9 +495,10 @@ function renderClassicScoreboard(container, players) {
 
   // Update total scores and mark highest-score
   for (let i = 0; i < 7; i++) {
-    const sumEl = container.querySelector(`span[data-player-index="${i}"][data-type="sum"]`);
+    const sumHost = container.querySelector(`[data-player-index="${i}"][data-type="sum"]`);
     const player = players[i];
-    if (sumEl) {
+    if (sumHost) {
+      const sumEl = sumHost.querySelector('span') || sumHost;
       sumEl.textContent = player ? player.score : 0;
       sumEl.style.display = i < players.length ? '' : 'none';
       if (player && Number(player.score) === maxScore && maxScore > 0) sumEl.classList.add('highest-score'); else sumEl.classList.remove('highest-score');
@@ -781,6 +788,34 @@ function initListControls() {
     const name = item.dataset.name;
     if (inc) { changeScore(name, +1); }
     else if (dec) { changeScore(name, -1); }
+  });
+
+  // Delegate clicks for duel victory toggles (if present)
+  document.addEventListener('click', (ev) => {
+    const duelToggle = ev.target.closest('.duel-victory-toggle');
+    if (!duelToggle) return;
+    const pidx = Number(duelToggle.dataset.playerIndex);
+    const victoryKind = String(duelToggle.dataset.victory || '').toLowerCase();
+    if (Number.isNaN(pidx) || !state.players || !state.players[pidx]) return;
+    if (!state.players[pidx]['play-details']) state.players[pidx]['play-details'] = {};
+    const pd = state.players[pidx]['play-details'];
+    const current = String(pd['victory-type'] || 'points');
+    const target = (victoryKind === 'military') ? 'military domination' : 'scientific domination';
+    if (current === target) {
+      // deactivate -> revert this player to points
+      pd['victory-type'] = 'points';
+    } else {
+      // Activating a victory: first clear any existing victory markers from ALL players
+      state.players.forEach((other) => {
+        if (!other['play-details']) other['play-details'] = {};
+        other['play-details']['victory-type'] = 'points';
+      });
+      // Then set the selected player's victory-type
+      pd['victory-type'] = target;
+    }
+    // Recalculate scores for all players (activation may affect others)
+    state.players.forEach(pl => recalculateDuelScore(pl));
+    saveAndRender();
   });
 
   // Delegate change events for any counter-input across mounted views

@@ -926,19 +926,63 @@ button.sidebar-toggle {
   max-width: 18rem;
 }
 
-.columns .col.player span[data-type="name"] {
+.columns .col.player [data-type="name"] {
   font-weight: var(--font-weight-bold);
   text-align: center;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.columns .col.player span[data-type="sum"] {
+.columns .col.player [data-type="sum"] {
   text-align: center;
   font-weight: var(--font-weight-semibold);
   border-bottom: 1px solid var(--muted-border);
   padding-bottom: 0; /* remove bottom padding to align with sub-totals */
   margin-bottom: 0; /* remove extra bottom gap to align rows precisely */
+}
+
+/* Name icons: hide by default, size to match text height and show via column state */
+   /* Name icons: hide by default, size to match text height and show via column state
+      Images are siblings of the name span, so use the general-sibling selector (~). */
+   .columns .col.player [data-type="name"] ~ img {
+     display: none;
+     height: 1em; /* same height as the surrounding text */
+     width: auto;
+     vertical-align: middle;
+     margin-left: 0.4rem;
+   }
+
+/* Show the military icon when the player column indicates a military victory */
+   .columns .col.player.military-victory [data-type="name"] ~ img.military-icon,
+   .columns .col.player.military-victory [data-type="name"] ~ img[data-role="military"] {
+     display: inline-block;
+   }
+
+/* Show the scientific icon when the player column indicates a scientific victory */
+   .columns .col.player.scientific-victory [data-type="name"] ~ img.scientific-icon,
+   .columns .col.player.scientific-victory [data-type="name"] ~ img[data-role="science"] {
+     display: inline-block;
+   }
+
+/* Fallbacks when images don't carry classes: assume first img = science, last img = military */
+   .columns .col.player.scientific-victory [data-type="name"] ~ img:first-of-type {
+     display: inline-block;
+   }
+   .columns .col.player.military-victory [data-type="name"] ~ img:last-of-type {
+     display: inline-block;
+   }
+
+/* Style victory buttons based on the column state so visual state follows the same class */
+.columns .col.player.military-victory .input-with-toggle button.duel-victory-toggle[data-victory="military"],
+.columns .col.player.scientific-victory .input-with-toggle button.duel-victory-toggle[data-victory="science"] {
+  background: var(--btn-active-bg);
+  border-radius: 0.25rem;
+}
+
+/* Dim the non-matching victory button when one victory is active */
+.columns .col.player.military-victory .input-with-toggle button.duel-victory-toggle[data-victory="science"],
+.columns .col.player.scientific-victory .input-with-toggle button.duel-victory-toggle[data-victory="military"] {
+  opacity: 0.45;
 }
 
 .columns .col.player counter-input {
@@ -1068,7 +1112,7 @@ counter-input {
 .input-with-toggle { gap: 0.5rem; }
 
 /* Ensure total/sum aligns vertically with counters */
-.columns.duel-columns span[data-type="sum"] {
+.columns.duel-columns [data-type="sum"] {
   display: inline-flex;
   align-items: center;
   min-height: var(--counter-btn-size);
