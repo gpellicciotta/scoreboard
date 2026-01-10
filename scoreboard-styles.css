@@ -61,6 +61,9 @@
   --rank-silver: #c0c0c0;
   --rank-bronze: #cd7f32;
   --rank-last: #6b6b6b;
+  /* Classic scoreboard column sizing (min / max) */
+  --classic-player-min-width: 12rem;
+  --classic-player-max-width: 15rem;
 }
 
 /* Base */
@@ -1162,6 +1165,40 @@ button.sidebar-toggle {
 
 /* Ensure the icons column images match the control height */
 .columns.duel-columns > .col.icons img {
+  width: 1.6rem;
+  height: auto;
+  display: block;
+}
+
+/* Classic grid / alignment: layout the Classic scoreboard as a single grid
+   similar to Duel but supporting more player columns. Use repeat() so the
+   number of player columns matches the HTML template (6 players). */
+#seven-wonders-classic-scoreboard.columns.classic-columns {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: var(--icons-col-width);
+  grid-auto-columns: minmax(var(--classic-player-min-width, 12rem), var(--classic-player-max-width, 15rem));
+  grid-template-rows: auto auto repeat(7, auto); /* name, sum, then category rows */
+  gap: 0.375rem;
+  align-items: center;
+  align-content: start;
+}
+
+/* The icons and player containers for Classic should not participate in the grid themselves. */
+.columns.classic-columns > .col.icons,
+.columns.classic-columns > .col.player {
+  display: contents;
+}
+
+/* Center common elements inside their grid cells (classic) */
+.columns.classic-columns > .col.icons > *,
+.columns.classic-columns > .col.player > * {
+  justify-self: center;
+  align-self: center;
+}
+
+/* Ensure the icons column images match the control height (classic) */
+.columns.classic-columns > .col.icons img {
   width: 1.6rem;
   height: auto;
   display: block;
