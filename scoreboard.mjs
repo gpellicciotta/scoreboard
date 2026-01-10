@@ -436,7 +436,10 @@ function renderDuelScoreboard(container, players) {
     const sumHost = container.querySelector(`[data-player-index="${i}"][data-type="sum"]`);
     if (sumHost) {
       const sumEl = sumHost.querySelector('span') || sumHost;
-      sumEl.textContent = p.score;
+      const pd = p['play-details'] || p.playDetails || {};
+      const isImmediate = pd['victory-type'] === 'military domination' || pd['victory-type'] === 'scientific domination';
+      // Show infinity sign for immediate victories; underlying score remains numeric (e.g., 1000) for ranking
+      sumEl.textContent = isImmediate ? '∞' : String(p.score);
       if (p.score === maxScore && maxScore > 0) {
         sumEl.classList.add('highest-score');
       } else {
@@ -1131,7 +1134,11 @@ function renderFinishedList(files, container) {
             nameEl.parentNode.insertBefore(img, nameEl.nextSibling);
           }
         }
-        if (valueEl) valueEl.textContent = p.score;
+        if (valueEl) {
+          const pd = p['play-details'] || p.playDetails || {};
+          const isImmediate = pd['victory-type'] === 'military domination' || pd['victory-type'] === 'scientific domination';
+          valueEl.textContent = isImmediate ? '∞' : String(p.score);
+        }
         // apply rank classes (gold/silver/bronze)
         const rank = ranksByName[p.name] || null;
         applyRankClasses(li, Number(p.score) || 0, rank, Boolean(isLastByName[p.name]));
