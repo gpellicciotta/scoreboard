@@ -79,10 +79,10 @@ function createStateObject(status, updatePlayDate = true) {
     const ranksByName = Object.create(null);
     let lastRank = 0;
     for (let i = 0; i < sortedForRank.length; i++) {
-      if (i === 0) { 
-        lastRank = 1; 
+      if (i === 0) {
+        lastRank = 1;
       }
-      else { 
+      else {
         lastRank = (Number(sortedForRank[i].score) || 0) === (Number(sortedForRank[i - 1].score) || 0) ? lastRank : i + 1;
       }
       ranksByName[sortedForRank[i].name] = lastRank;
@@ -104,8 +104,6 @@ function createStateObject(status, updatePlayDate = true) {
       const copy = Object.assign({}, p);
       const r = ranksByName[p.name];
       if (r && r <= 3) copy.rank = r;
-      // For Duel games, `play-details` will include `victory-type` when
-      // applicable (values: 'points', 'military domination', 'scientific domination').
       return copy;
     });
   }
@@ -170,19 +168,20 @@ function showView(templateId, onMount) {
   if (!app || !tpl) {
     return null;
   }
-  // hide default views
-  const def = defaultViews(); 
-  if (def) { 
+  // Hide default views
+  const def = defaultViews();
+  if (def) {
     def.hidden = true;
   }
-  // remove existing mounted view
-  const existing = document.getElementById('mounted-view'); 
+  // Remove existing mounted view
+  const existing = document.getElementById('mounted-view');
   if (existing) existing.remove();
-  // mount new view
-  const mount = document.createElement('div'); mount.id = 'mounted-view';
+  // Mount new view
+  const mount = document.createElement('div'); 
+  mount.id = 'mounted-view';
   mount.appendChild(tpl.content.cloneNode(true));
   app.appendChild(mount);
-  // transfer toolbar content into app-toolbar (which lives in header)
+  // Transfer toolbar content into app-toolbar (which lives in header)
   const toolbar = mount.querySelector('.view-toolbar');
   const toolbarHost = appToolbar();
   if (toolbarHost) {
@@ -198,16 +197,16 @@ function showView(templateId, onMount) {
   }
 
   // If the template provided a view-title, use it as the app title
-  let vt = mount.querySelector('.view-title');
-  if (!vt && toolbarHost) {
-    vt = toolbarHost.querySelector('.view-title');
+  let viewTitle = mount.querySelector('.view-title');
+  if (!viewTitle && toolbarHost) {
+    viewTitle = toolbarHost.querySelector('.view-title');
   }
-  if (vt) {
+  if (viewTitle) {
     const titleEl = el('app-title');
     if (titleEl) {
       // For the generic scoreboard view, prepend the active game's name
       // followed by a space; otherwise use the view-title text alone.
-      let titleText = vt.textContent || '';
+      let titleText = viewTitle.textContent || '';
       if (templateId === 'tpl-generic' && state.game && String(state.game).trim().length) {
         titleText = String(state.game).trim() + ' ' + titleText;
       }
@@ -216,7 +215,7 @@ function showView(templateId, onMount) {
     // Remove the view-title element from the DOM so it isn't preserved
     // in the mounted view or toolbar; its text has been copied to the
     // header title and the element itself is no longer needed.
-    if (vt.parentNode) vt.parentNode.removeChild(vt);
+    viewTitle.remove();
   }
   if (typeof onMount === 'function') {
     onMount(mount);
@@ -225,17 +224,17 @@ function showView(templateId, onMount) {
 }
 
 function closeView() {
-  const def = defaultViews(); 
-  if (def) {
-    def.hidden = false;
-  }
-  const mount = document.getElementById('mounted-view'); 
+  const mount = document.getElementById('mounted-view');
   if (mount) {
     mount.remove();
   }
-  const toolbarHost = appToolbar(); 
+  const toolbarHost = appToolbar();
   if (toolbarHost) {
     toolbarHost.innerHTML = '';
+  }
+  const def = defaultViews();
+  if (def) {
+    def.hidden = false;
   }
   // Restore title based on current state
   updateTitle();
@@ -243,11 +242,11 @@ function closeView() {
 }
 
 function save() {
-  try { 
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state)); 
-  } 
-  catch (e) { 
-    console.warn('Failed to save', e) 
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+  }
+  catch (e) {
+    console.warn('Failed to save', e)
   }
 }
 
@@ -272,6 +271,14 @@ function getPlayer(name) {
   return state.players.find(x => x.name === name);
 }
 
+function changeScore(name, delta) {
+  const p = getPlayer(name);
+  if (!p) return;
+  // Prevent negative scores
+  p.score = Math.max(0, p.score + delta);
+  saveAndRender();
+}
+
 // # Rendering / ranking
 
 function updateTitle() {
@@ -281,7 +288,7 @@ function updateTitle() {
   }
   if (state.game && state.game.trim().length > 0) {
     titleEl.textContent = `${state.game} Scores`;
-  } 
+  }
   else {
     titleEl.textContent = 'SCOREBOARD';
   }
@@ -317,7 +324,7 @@ function render() {
   else {
     showView('tpl-generic', (mount) => {
       const list = mount.querySelector('#scoreboard-list');
-      // render generic list: reuse existing rendering logic
+      // Render generic list: reuse existing rendering logic
       if (list && tpl) {
         list.innerHTML = '';
         // Compute ranks taking ties into account so we can style top-3
@@ -325,7 +332,7 @@ function render() {
         const ranksByName = Object.create(null);
         let lastRank = 0;
         for (let i = 0; i < sorted.length; i++) {
-          if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i-1].score) || 0) ? lastRank : i + 1;
+          if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i - 1].score) || 0) ? lastRank : i + 1;
           ranksByName[sorted[i].name] = lastRank;
         }
         const isLastByName = {};
@@ -346,7 +353,7 @@ function render() {
           const valueEl = li.querySelector('.score-value');
           if (nameEl) nameEl.textContent = p.name;
           if (valueEl) valueEl.textContent = p.score;
-          // apply rank classes
+          // Apply rank classes
           const rank = ranksByName[p.name] || null;
           applyRankClasses(li, Number(p.score) || 0, rank, Boolean(isLastByName[p.name]));
           list.appendChild(node);
@@ -370,7 +377,8 @@ function recalculateDuelScore(player) {
     const value = Number(player['play-details'][category] || 0);
     if (category === 'money-coins') {
       total += Math.floor(value / 3);
-    } else {
+    } 
+    else {
       total += value;
     }
   }
@@ -380,6 +388,7 @@ function recalculateDuelScore(player) {
 function renderDuelScoreboard(container, players) {
   if (!container) return;
 
+  console.log("rendering dual scoreboard");
   const scores = players.map(p => p.score);
   const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
 
@@ -388,15 +397,16 @@ function renderDuelScoreboard(container, players) {
     // select the element that represents the name by attribute (tag may vary)
     const nameHost = container.querySelector(`[data-player-index="${i}"][data-type="name"]`);
     if (nameHost) {
-      // find the inner span used for the visible name, if present
+      // Find the inner span used for the visible name, if present
       const nameSpan = nameHost.querySelector('span') || nameHost;
-      // set the displayed name without disturbing sibling icons/images
+      // Set the displayed name without disturbing sibling icons/images
       nameSpan.textContent = p.name;
-      // Determine victory-type but do not insert textual badges; icons + column classes handle visuals
+      // Determine victory-type: icons + column classes handle visuals
       const vt = (p['play-details'] && p['play-details']['victory-type']) ? String(p['play-details']['victory-type']) : '';
       if (p.score === maxScore && maxScore > 0) {
         nameSpan.classList.add('highest-score');
-      } else {
+      }
+      else {
         nameSpan.classList.remove('highest-score');
       }
       // Ensure the player column reflects any immediate victory via CSS class
@@ -442,7 +452,8 @@ function renderDuelScoreboard(container, players) {
       sumEl.textContent = isImmediate ? '∞' : String(p.score);
       if (p.score === maxScore && maxScore > 0) {
         sumEl.classList.add('highest-score');
-      } else {
+      } 
+      else {
         sumEl.classList.remove('highest-score');
       }
     }
@@ -457,7 +468,8 @@ function recalculateClassicScore(player) {
     const value = Number(player['play-details'][category] || 0);
     if (category === 'money-coins') {
       total += Math.floor(value / 3);
-    } else {
+    } 
+    else {
       total += value;
     }
   }
@@ -507,16 +519,6 @@ function renderClassicScoreboard(container, players) {
       if (player && Number(player.score) === maxScore && maxScore > 0) sumEl.classList.add('highest-score'); else sumEl.classList.remove('highest-score');
     }
   }
-}
-
-// # Implementation Support
-
-function changeScore(name, delta) {
-  const p = getPlayer(name);
-  if (!p) return;
-  // prevent negative scores
-  p.score = Math.max(0, p.score + delta);
-  saveAndRender();
 }
 
 // # Public API functions (for external, programmatic usage)
@@ -628,15 +630,19 @@ function initCloudSave() {
 function initSettings() {
   const btn = el('auto-sort-toggle');
   if (!btn) return;
-  // ensure state['auto-sort'] exists (default true)
-  if (typeof state['auto-sort'] === 'undefined') state['auto-sort'] = true;
+  // Ensure state['auto-sort'] exists (default true)
+  if (typeof state['auto-sort'] === 'undefined') {
+    state['auto-sort'] = true;
+  }
   const setUI = () => {
     const on = Boolean(state['auto-sort']);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.classList.toggle('active', on);
     // Update visible label to reflect current behavior
     const label = btn.querySelector('.label');
-    if (label) label.textContent = on ? "Don't Auto-Sort" : 'Auto-sort';
+    if (label) {
+      label.textContent = on ? "Don't Auto-Sort" : 'Auto-sort';
+    }
   };
   setUI();
   btn.addEventListener('click', () => {
@@ -658,8 +664,14 @@ function initSidebar() {
     sidebar.classList.toggle('expanded', expanded);
     sidebarToggle.classList.toggle('expanded', expanded);
     if (icon) {
-      if (expanded) { icon.classList.remove('fa-bars'); icon.classList.add('fa-xmark'); }
-      else { icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars'); }
+      if (expanded) { 
+        icon.classList.remove('fa-bars'); 
+        icon.classList.add('fa-xmark'); 
+      }
+      else { 
+        icon.classList.remove('fa-xmark'); 
+        icon.classList.add('fa-bars'); 
+      }
     }
   };
   setState(!sidebar.classList.contains('collapsed'));
@@ -722,7 +734,7 @@ function initImportExport() {
           if (loadStateObject(parsed)) {
             // Persist imported state then close any mounted view (closeView triggers render)
             save();
-            try { closeView(); } catch (e) {}
+            try { closeView(); } catch (e) { }
           }
           else {
             console.error('Failed to import state from JSON file');
@@ -852,18 +864,20 @@ function initFinishGame() {
     if (winners.length === 1) msg = winners[0] + ' Has Won!';
     else if (winners.length === 2) msg = winners[0] + ' and ' + winners[1] + ' Have All Won!';
     else msg = winners.slice(0, -1).join(', ') + ' and ' + winners[winners.length - 1] + ' Have All Won!';
-    // choose configured celebration link (support placeholder {{MESSAGE}})
+    // Choose configured celebration link (support placeholder {{MESSAGE}})
     const cfg = state.celebrationLink || DEFAULT_CELEBRATION_LINK;
     const encoded = encodeURIComponent(msg);
     let finalUrl = cfg;
     if (cfg && cfg.indexOf('{{MESSAGE}}') !== -1) {
       finalUrl = cfg.split('{{MESSAGE}}').join(encoded);
-    } else {
-      // append message to end of URL; if URL already has query params add '&' otherwise add '?'
+    } 
+    else {
+      // Append message to end of URL; if URL already has query params add '&' otherwise add '?'
       if (cfg && cfg.length) {
         const sep = cfg.indexOf('?') !== -1 ? '&' : '?';
         finalUrl = cfg + sep + encoded;
-      } else {
+      } 
+      else {
         finalUrl = 'celebration.html?s=10&msg=' + encoded;
       }
     }
@@ -912,8 +926,8 @@ function initNewGame() {
           state.game = '7 Wonders Duel';
           const playDetails = {};
           for (const categoryName in DUEL_CATEGORIES) playDetails[DUEL_CATEGORIES[categoryName]] = 0;
-          state.players = [ { name: 'Player 1', score: 0, 'play-details': { ...playDetails } }, { name: 'Player 2', score: 0, 'play-details': { ...playDetails } } ];
-        } 
+          state.players = [{ name: 'Player 1', score: 0, 'play-details': { ...playDetails } }, { name: 'Player 2', score: 0, 'play-details': { ...playDetails } }];
+        }
         else if (selectedType === 'classic') {
           state.game = '7 Wonders';
           const numPlayers = parseInt((content.querySelector('#classic-players') && content.querySelector('#classic-players').value) || 3, 10);
@@ -921,7 +935,7 @@ function initNewGame() {
           for (const categoryName in CLASSIC_CATEGORIES) playDetails[CLASSIC_CATEGORIES[categoryName]] = 0;
           state.players = [];
           for (let i = 0; i < numPlayers; i++) {
-            state.players.push({ name: `Player ${i+1}`, score: 0, 'play-details': {...playDetails} });
+            state.players.push({ name: `Player ${i + 1}`, score: 0, 'play-details': { ...playDetails } });
           }
         }
         // Persist state then close the new-game view which will trigger render
@@ -939,13 +953,16 @@ document.addEventListener('DOMContentLoaded', () => {
   load();
   if (!state.players || state.players.length === 0) {
     state.players = DEFAULT_NAMES.map(n => ({ name: n, score: 0, 'play-details': {} }));
-    // ensure default celebration link exists
-    if (typeof state.celebrationLink === 'undefined') state.celebrationLink = DEFAULT_CELEBRATION_LINK;
+    // Ensure default celebration link exists
+    if (typeof state.celebrationLink === 'undefined') {
+      state.celebrationLink = DEFAULT_CELEBRATION_LINK;
+    }
     save();
   }
-  // if state exists but lacks celebrationLink, ensure default
-  if (typeof state.celebrationLink === 'undefined') state.celebrationLink = DEFAULT_CELEBRATION_LINK;
-
+  // If state exists but lacks celebrationLink, ensure default
+  if (typeof state.celebrationLink === 'undefined') {
+    state.celebrationLink = DEFAULT_CELEBRATION_LINK;
+  }
   render();
   initSidebar();
   initImportExport();
@@ -1018,7 +1035,7 @@ async function loadFinishedFile(fileName) {
 function renderFinishedList(files, container) {
   if (!container) return;
   container.innerHTML = '';
-  // container panel (visual grouping only)
+  // Container panel (visual grouping only)
   const panel = document.createElement('div');
   panel.className = 'finished-games-panel';
 
@@ -1102,7 +1119,7 @@ function renderFinishedList(files, container) {
       const ranksByName = Object.create(null);
       let lastRank = 0;
       for (let i = 0; i < sorted.length; i++) {
-        if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i-1].score) || 0) ? lastRank : i + 1;
+        if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i - 1].score) || 0) ? lastRank : i + 1;
         ranksByName[sorted[i].name] = lastRank;
       }
       const isLastByName = {};

@@ -44,6 +44,10 @@
   --sidebar-collapsed-width: 3rem;
   --icons-col-width: 4.5rem;
 
+  /* Common spacing tokens used through the stylesheet */
+  --spacing: 1rem;
+  --spacing-sm: 0.5rem;
+  --spacing-xs: 0.25rem;
   /* Button / action colors */
   --btn-hover: var(--blue);
   --btn-active: #ffd700; /* gold */
@@ -107,7 +111,7 @@ counter-input {
   border-bottom: 1px solid var(--muted-border);
   display: flex;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0 var(--spacing);
   z-index: 110;
 }
 
@@ -119,8 +123,8 @@ counter-input {
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0 0.5rem;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-sm);
   z-index: 96;
   background: transparent;
   border-bottom: none;
@@ -150,36 +154,34 @@ counter-input {
   color: var(--btn-hover);
 }
 
-.app-content {
-  padding-top: calc(var(--app-header-height) + 1rem);
-}
+/* header spacing handled within the main .app-content block below */
 
 /* Ensure mounted views fill the content area; config editor needs full height */
 #mounted-view,
 #mounted-view .view-content {
-  min-height: calc(100vh - var(--app-header-height) - 1rem);
+  min-height: calc(100vh - var(--app-header-height) - var(--spacing));
   box-sizing: border-box;
-  padding: 1rem;
+  padding: var(--spacing);
 }
 
 /* When a view's toolbar is moved into the header, ensure content doesn't sit under it */
 #mounted-view .view-content {
-  padding-top: 0.5rem;
+  padding-top: var(--spacing-sm);
 }
 
 /* Mounted view layout: make view fill available content and allow flexible children */
 #mounted-view {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  height: calc(100vh - var(--app-header-height) - 1rem);
+  gap: var(--spacing-sm);
+  height: calc(100vh - var(--app-header-height) - var(--spacing));
 }
 
 #mounted-view > .view-content {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
   overflow: auto;
 }
 
@@ -200,8 +202,13 @@ counter-input {
 
 .config-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
+  margin-top: var(--spacing-sm);
+}
+
+.config-buttons button {
+  padding: 0.5rem 0.75rem;
 }
 
 /* Style for New Game form: highlight the game name input with a blue border */
@@ -242,7 +249,7 @@ counter-input {
   min-height: 100vh;
   margin: 0 auto;
   background: transparent;
-  padding: calc(var(--app-header-height) + 1rem) 1rem 1rem calc(var(--sidebar-collapsed-width) + 1rem);
+  padding: calc(var(--app-header-height) + var(--spacing)) var(--spacing) var(--spacing) calc(var(--sidebar-collapsed-width) + var(--spacing));
   border-radius: 8px;
   font-size: var(--font-size);
   position: relative;
@@ -635,16 +642,7 @@ button.sidebar-toggle {
   color: var(--page-color);
 }
 
-.config-buttons {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-  margin-top: 0.5rem
-}
-
-.config-buttons button {
-  padding: 0.5rem 0.75rem
-}
+.config-buttons { /* consolidated earlier */ }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -928,6 +926,7 @@ button.sidebar-toggle {
 
 .columns .col.player [data-type="name"] {
   font-weight: var(--font-weight-bold);
+  font-size: calc(var(--font-size-regular) * 1.25);
   text-align: center;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -936,6 +935,7 @@ button.sidebar-toggle {
 .columns .col.player [data-type="sum"] {
   text-align: center;
   font-weight: var(--font-weight-semibold);
+  font-size: calc(var(--font-size-regular) * 1.25);
   border-bottom: 1px solid var(--muted-border);
   padding-bottom: 0; /* remove bottom padding to align with sub-totals */
   margin-bottom: 0; /* remove extra bottom gap to align rows precisely */
@@ -1041,16 +1041,26 @@ button.sidebar-toggle {
   width: auto;
 }
 
-/* Ensure counter-inputs align consistently inside player columns */
-.columns .col.player counter-input {
-  align-self: center;
+/* Prevent flicker when unrelated DOM updates occur (e.g. counter button presses).
+   Promote icons and toggle images to their own compositor layer so the browser
+   doesn't repaint them on every document reflow. */
+.columns .col.icons img,
+.columns.duel-columns .input-with-toggle > button.duel-victory-toggle img,
+.duel-victory-badge img {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
+
+/* Ensure counter-inputs align consistently inside player columns (single definition above) */
 
 .duel-victory-badge {
   display: inline-block;
   margin-left: 0.5rem;
 }
-.input-with-toggle { display: inline-flex; align-items: center; gap: 0.25rem; }
+.input-with-toggle { display: inline-flex; align-items: center; gap: 0.5rem; }
 .duel-victory-toggle {
   background: transparent;
   border: none;
@@ -1073,6 +1083,49 @@ button.sidebar-toggle {
   height: auto;
   margin-left: 0.4rem;
   vertical-align: middle;
+}
+
+/* Ensure duel toggle rows match the counter button height to avoid
+   inconsistent row sizes. Also remove any focus outline/shadow applied
+   globally so toggles remain visually flat. */
+
+.columns.duel-columns .input-with-toggle > button.duel-victory-toggle {
+  /* let the button size to its content; limit image below to avoid enlarging rows */
+  height: auto;
+  min-height: 0;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.columns.duel-columns .input-with-toggle > .duel-toggle-placeholder,
+.columns.duel-columns .input-with-toggle > counter-input {
+  /* ensure counters keep expected height while allowing toggles to remain compact */
+  min-height: var(--counter-btn-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.columns.duel-columns .input-with-toggle > button.duel-victory-toggle img {
+  /* cap icon size to the original visual size to avoid inflating the row */
+  height: 1.6rem;
+  max-height: var(--counter-btn-size);
+  width: auto;
+  display: block;
+  vertical-align: middle;
+}
+
+/* Remove focus rings for duel toggles (visual design requires flat buttons).
+   Keep :focus-visible hack minimal for accessibility if needed later. */
+.columns.duel-columns .input-with-toggle > button.duel-victory-toggle:focus,
+.columns.duel-columns .input-with-toggle > button.duel-victory-toggle:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Duel grid / alignment: layout the entire Duel scoreboard as a single grid so
@@ -1125,7 +1178,7 @@ counter-input {
   padding: 0;
 }
 
-.input-with-toggle { gap: 0.5rem; }
+/* gap for .input-with-toggle consolidated above */
 
 /* Placeholder used to align counter-inputs with duel toggle buttons */
 .duel-toggle-placeholder {
@@ -1140,6 +1193,7 @@ counter-input {
   align-items: center;
   min-height: var(--counter-btn-size);
   padding: 0 0.25rem;
+  font-size: calc(var(--font-size-regular) * 1.25);
 }
 
 /* Make the input-with-toggle a 3-cell grid so left placeholder and right
