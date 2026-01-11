@@ -2,6 +2,8 @@
 
 ## Todo's 
 - [ ] Re-use more code from hinolugi-utils.js
+- [ ] Re-structure as the counters app is structured
+- [ ] Improve the color scheme and ensure both dark/light modes are well supported
 
 ## Releases
 
