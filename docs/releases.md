@@ -16,6 +16,7 @@
 - Added theme switch action for dark/light mode; use system-theme by default
 - Improved sidebar layout
 - Added welcome screen on first load
+- Improved mobile UI
 
 ### v1.0.0 - Initial Release (2025-01-03)
 - First version allowing to create scoreboards for simple games with multiple players.

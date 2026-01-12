@@ -783,14 +783,27 @@ button.sidebar-toggle {
     flex-direction: row-reverse
   }
 
-  /* Ensure the sidebar toggle (hamburger) remains visible in mobile
-     even though header uses row-reverse ordering. Position it at the
-     right side of the header for easy reach and above other toolbar items. */
+  /* Rely on flex-direction (row-reverse) to place the toolbar left of the title.
+     Keep toolbar and toggle in the normal flow (no absolute positioning). */
+  .app-toolbar {
+    position: static;
+    right: auto;
+    top: auto;
+    height: auto;
+    padding: 0 .5rem;
+    z-index: 100;
+    background: transparent;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Put the sidebar toggle into the normal flow so row-reverse ordering
+     places it at the far right automatically. Remove absolute positioning. */
   .app-header .sidebar-toggle {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
+    position: static;
+    right: auto;
+    top: auto;
+    transform: none;
     z-index: 120;
     color: var(--page-color);
   }
@@ -819,6 +832,14 @@ button.sidebar-toggle {
     height: auto;
     max-width: 100vw;
     width: 100vw;
+  }
+
+  /* Limit expanded sidebar height to viewport minus header and allow vertical scrolling
+     so bottom actions remain accessible on small screens. */
+  .app-sidebar.expanded {
+    max-height: calc(100vh - var(--app-header-height));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* When expanded on mobile, bring the sidebar above the footer/header
@@ -864,6 +885,9 @@ button.sidebar-toggle {
   .app-sidebar.expanded.sidebar-actions {
     transform: translateY(0);
     pointer-events: auto;
+    /* ensure the content area itself can scroll if it's taller than the allowed max-height */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .app-sidebar.collapsed .sidebar-content,

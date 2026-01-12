@@ -734,7 +734,7 @@ function initTheme() {
     }
     try { themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false'); } catch (e) { }
     const lbl = themeToggle.querySelector('.label');
-    if (lbl) lbl.textContent = theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
+    if (lbl) lbl.textContent = theme === 'dark' ? 'Use Light Theme' : 'Use Dark Theme';
   };
 
   // Toggle invoked by the user — persist their explicit choice.
