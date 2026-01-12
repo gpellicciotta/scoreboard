@@ -160,7 +160,7 @@ const el = (id) => document.getElementById(id);
 // Simple view manager: mount templates into `app-content` and show/hide default views
 const appContent = () => el('app-content');
 const appToolbar = () => el('app-toolbar');
-const defaultViews = () => el('default-view');
+const defaultViews = () => el('mounted-view');
 
 function showView(templateId, onMount) {
   const app = appContent();
@@ -230,19 +230,6 @@ function closeView() {
   const toolbarHost = appToolbar();
   if (toolbarHost) {
     toolbarHost.innerHTML = '';
-  }
-  const def = defaultViews();
-  if (def) {
-    def.hidden = false;
-    // If the default view provides a toolbar, move its children into the header toolbar
-    try {
-      const viewToolbar = def.querySelector && def.querySelector('.view-toolbar');
-      if (viewToolbar && toolbarHost) {
-        // Clone toolbar children so the persistent default view keeps its toolbar
-        Array.from(viewToolbar.children).forEach(ch => toolbarHost.appendChild(ch.cloneNode(true)));
-      }
-    }
-    catch (e) { }
   }
   // Restore title based on current state
   updateTitle();
@@ -1023,7 +1010,7 @@ function initNewGame() {
 // # Event handlers
 
 document.addEventListener('DOMContentLoaded', () => {
-  tpl = document.getElementById('score-item-template');
+  tpl = document.getElementById('tpl-score-item');
   const hasSavedState = Boolean(localStorage.getItem(LOCAL_STORAGE_KEY));
   load();
   if (!state.players || state.players.length === 0) {
@@ -1038,24 +1025,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof state.celebrationLink === 'undefined') {
     state.celebrationLink = DEFAULT_CELEBRATION_LINK;
   }
-  // If there is saved state, render it; otherwise keep the welcome/default view
+  // If there is saved state, render it; otherwise mount the intro template
   if (hasSavedState) {
     render();
   }
   else {
-    // If no saved state, copy default view toolbar into the app toolbar
-    const def = defaultViews();
-    if (def) {
-      const viewToolbar = def.querySelector('.view-toolbar');
-      const toolbarHost = appToolbar();
-      if (viewToolbar && toolbarHost) {
-        toolbarHost.innerHTML = '';
-        // Clone toolbar children so the persistent default view keeps its toolbar
-        Array.from(viewToolbar.children).forEach(ch => toolbarHost.appendChild(ch.cloneNode(true)));
-      }
+    // Mount the intro template so it behaves like any other view (view-title and toolbar
+    // will be removed and transferred to the header by `showView`).
+    const tplIntro = document.getElementById('tpl-intro');
+    if (tplIntro) {
+      showView('tpl-intro');
     }
-    // Ensure header title reflects the default view
-    updateTitle();
+    else {
+      // Fallback: ensure title is correct
+      updateTitle();
+    }
   }
   initSidebar();
   initTheme();

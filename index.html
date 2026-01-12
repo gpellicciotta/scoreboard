@@ -23,42 +23,47 @@
 
   <aside id="app-sidebar" class="app-sidebar collapsed sidebar-actions sidebar-content" role="complementary">
     <!-- Primary actions (most used) -->
-    <button id="new-game" aria-label="Create a new game">                           <i class="fa-solid fa-plus" aria-hidden="true"></i>            <span class="label">New Game</span></button>
-    <button id="finish-game" aria-label="Finish game and celebrate">                <i class="fa-solid fa-trophy" aria-hidden="true"></i>          <span class="label">Finish Game</span></button>
-    <button id="scoreboard-reset" aria-label="Reset scores">                        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>    <span class="label">Reset Scores</span></button>
+    <button id="new-game" class="action" aria-label="Create a new game">                           <i class="fa-solid fa-plus" aria-hidden="true"></i>            <span class="label">New Game</span></button>
+    <button id="finish-game" class="action" aria-label="Finish game and celebrate">                <i class="fa-solid fa-trophy" aria-hidden="true"></i>          <span class="label">Finish Game</span></button>
+    <button id="scoreboard-reset" class="action" aria-label="Reset scores">                        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>    <span class="label">Reset Scores</span></button>
     <!-- Persistence actions -->
     <div class="sidebar-sep" role="separator" aria-hidden="true"></div>
-    <button id="export-json" aria-label="Export scores">                            <i class="fa-solid fa-download" aria-hidden="true"></i>        <span class="label">Export State</span></button>
-    <button id="import-json" aria-label="Import scores">                            <i class="fa-solid fa-upload" aria-hidden="true"></i>          <span class="label">Import State</span></button>
-    <button id="save-to-cloud" aria-label="Save to Cloud">                          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>  <span class="label">Save to Cloud</span></button>
-    <button id="load-from-cloud" aria-label="Load from Cloud">                      <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i><span class="label">Load from Cloud</span></button>
-    <button id="list-finished-games" aria-label="List finished games">              <i class="fa-solid fa-list" aria-hidden="true"></i>            <span class="label">Finished Games</span></button>
+    <button id="export-json" class="action" aria-label="Export scores">                            <i class="fa-solid fa-download" aria-hidden="true"></i>        <span class="label">Export State</span></button>
+    <button id="import-json" class="action" aria-label="Import scores">                            <i class="fa-solid fa-upload" aria-hidden="true"></i>          <span class="label">Import State</span></button>
+    <button id="save-to-cloud" class="action" aria-label="Save to Cloud">                          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>  <span class="label">Save to Cloud</span></button>
+    <button id="load-from-cloud" class="action" aria-label="Load from Cloud">                      <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i><span class="label">Load from Cloud</span></button>
+    <button id="list-finished-games" class="action" aria-label="List finished games">              <i class="fa-solid fa-list" aria-hidden="true"></i>            <span class="label">Finished Games</span></button>
     <!-- Utilities -->
     <div class="sidebar-sep" role="separator" aria-hidden="true"></div>
-    <button id="configure-json" aria-label="Configure">                             <i class="fa-solid fa-gear" aria-hidden="true"></i>            <span class="label">Configure</span></button>
-    <button id="auto-sort-toggle" aria-pressed="true" aria-label="Toggle auto-sort"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>  <span class="label">Auto-sort</span></button>
-    <button id="theme-toggle" title="Toggle theme">
+    <button id="configure-json" class="action" aria-label="Configure">                             <i class="fa-solid fa-gear" aria-hidden="true"></i>            <span class="label">Configure</span></button>
+    <button id="auto-sort-toggle" class="action" aria-pressed="true" aria-label="Toggle auto-sort"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>  <span class="label">Auto-sort</span></button>
+    <button id="theme-toggle" class="action" title="Toggle theme">
       <i class="fa-solid fa-sun"></i>
       <span class="label">Use Dark Theme</span>
     </button>   
   </aside>
 
   <main id="app-content" class="app-content" role="main">
-    <!-- Default views container -->
-    <div id="default-view">    
-      <h2 class="view-title">Welcome to Scoreboard</h2>
-      <div class="view-toolbar"></div>
-      <div class="view-content">
-        <p>This simple scoreboard helps you track player scores across different games.
-           To get started, choose <strong class="action">New Game</strong> from the sidebar, add or edit players via
-           <strong class="action">Configure</strong>, 
-           then use the <span class="button">+</span> / <span class="button">-</span> controls next to each player to adjust scores.
-           When finished, use <strong class="action">Finish Game</strong> and optionally <strong class="action">Save to Cloud</strong> to archive results.</p>
-        <p class="note">Tip: Auto-sort keeps the leaderboard ordered by score. Use the auto-sort toggle in Utilities.</p>
-      </div>
-    </div>
+    <!-- Mounted view container (kept empty; views are provided via templates) -->
+    <div id="mounted-view"></div>
 
     <!-- Templates for main views -->
+
+    <!-- Intro template: mounted on first-run when no saved state exists -->
+    <template id="tpl-intro">
+      <div class="default-view">
+        <h2 class="view-title">Welcome to Scoreboard</h2>
+        <div class="view-toolbar"></div>
+        <div class="view-content">
+        <p>This simple scoreboard helps you track player scores across different games.</p>
+        <p>To get started, choose <span class="action"><i class="fa-solid fa-plus"></i>New Game</span> from the sidebar via <span class="sidebar-toggle"><i class="fa-solid fa-bars" aria-hidden="true"></i></span>.</p>
+        <p>Then add or edit players via <span class="action"><i class="fa-solid fa-gear" aria-hidden="true"></i>Configure</span> while using the <span class="button"><i class="fa-solid fa-plus" aria-hidden="true"></i></span> / <span class="button"><i class="fa-solid fa-minus" aria-hidden="true"></i></span> controls next to each player to adjust scores.</p>
+        <p>When finished, use <span class="action"><i class="fa-solid fa-trophy" aria-hidden="true"></i>Finish Game</span> and optionally <span class="action"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>Save to Cloud</span> to archive results.</p>
+        <p class="note">Tip: <span class="action"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>Auto-sort</span> keeps the leaderboard ordered by rank.</p>
+      </div>
+    </template>
+
+    <!-- Template for generic game scoreboard -->
     <template id="tpl-generic">
       <h2 class="view-title">Scores</h2>
       <div class="view-toolbar"></div>
@@ -67,6 +72,25 @@
       </div>
     </template>
 
+    <!-- Template for generic game participant scoring panel -->
+    <template id="tpl-score-item">
+      <li class="score-item">
+        <div class="score-controls">
+          <button class="decrease" aria-label="Decrease score">
+            <i class="fa-solid fa-minus" aria-hidden="true"></i>
+          </button>
+          <button class="increase" aria-label="Increase score">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="score-meta">
+          <span class="score-name"></span>
+          <span class="score-value">0</span>
+        </div>
+      </li>
+    </template>
+
+    <!-- Template for 7 Wonders Duel scoreboard -->
     <template id="tpl-duel">
       <h2 class="view-title">7 Wonders Duel</h2>
       <div class="view-toolbar"></div>
@@ -144,6 +168,7 @@
       </div>
     </template>
 
+    <!-- Template for 7 Wonders Classic scoreboard -->
     <template id="tpl-classic">
       <h2 class="view-title">7 Wonders</h2>
       <div class="view-toolbar"></div>
@@ -242,6 +267,7 @@
     </template>
     </div>
 
+    <!-- Template for new game form -->
     <template id="tpl-new-game">
       <h2 class="view-title">New Game</h2>
       <div class="view-toolbar">
@@ -275,6 +301,7 @@
       </div>
     </template>
 
+    <!-- Template for finished games list view -->
     <template id="tpl-finished-games">
       <h2 class="view-title">Finished Games</h2>
       <div class="view-toolbar">
@@ -285,6 +312,7 @@
       </div>
     </template>
 
+    <!-- Template for configuration editor -->
     <template id="tpl-config-editor">
       <h2 class="view-title">Configuration</h2>
       <div class="view-toolbar">
@@ -298,24 +326,6 @@
       </div>
     </template>
 
-    <template id="score-item-template">
-      <li class="score-item">
-        <div class="score-controls">
-          <button class="decrease" aria-label="Decrease score">
-            <i class="fa-solid fa-minus" aria-hidden="true"></i>
-          </button>
-          <button class="increase" aria-label="Increase score">
-            <i class="fa-solid fa-plus" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="score-meta">
-          <span class="score-name"></span>
-          <span class="score-value">0</span>
-        </div>
-      </li>
-    </template>
-
   </main>
 </body>
-
 </html>
