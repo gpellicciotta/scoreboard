@@ -1150,7 +1150,10 @@ button.sidebar-toggle {
   /* match the left padding used by .app-content to define the content's
      visual left edge (sidebar gap + 1rem) */
   width: calc(var(--sidebar-collapsed-width) + 1rem);
-  background: var(--muted-bg);
+  /* Use the page background so this mask doesn't produce a visible
+     darker strip in the light theme. It still serves as a clipping
+     mask but will match the content area visually. */
+  background: var(--page-bg);
   z-index: 25; /* below icons (30) but above players */
   pointer-events: none;
 }
