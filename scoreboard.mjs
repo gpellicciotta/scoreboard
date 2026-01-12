@@ -47,6 +47,81 @@ let _isConfiguring = false;
 let _listControlsInit = false;
 let _finishedGamesCache = []; // cached array of { fileName, data, date, gameName, winners }
 
+// Notifications helpers
+
+let _notifCounter = 0;
+const notifierEl = () => document.getElementById('notifier');
+
+function _makeToastNode(id, { message = '', type = 'info', dismissible = true }) {
+  const div = document.createElement('div');
+  div.className = `toast ${type}`;
+  div.id = id;
+  div.tabIndex = 0;
+  const role = (type === 'error') ? 'alert' : 'status';
+  div.setAttribute('role', role);
+  const spinnerHtml = type === 'progress' ? '<span class="spinner" aria-hidden="true"></span>' : '';
+  div.innerHTML = `${spinnerHtml}<div class="message">${String(message)}</div>`;
+  const actions = document.createElement('div'); actions.className = 'actions';
+  if (dismissible) {
+    const btn = document.createElement('button'); btn.className = 'dismiss'; btn.type = 'button'; btn.innerHTML = '&times;'; btn.title = 'Dismiss';
+    btn.addEventListener('click', () => dismissNotification(id));
+    actions.appendChild(btn);
+  }
+  div.appendChild(actions);
+  // allow Esc to dismiss
+  div.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') dismissNotification(id); });
+  return div;
+}
+
+function showNotification({ message = '', type = 'info', timeout = 4000, dismissible = true } = {}) {
+  const container = notifierEl();
+  if (!container) return { id: null, dismiss: () => {} };
+  const id = `notif-${++_notifCounter}`;
+  const node = _makeToastNode(id, { message, type, dismissible });
+  container.appendChild(node);
+  let to = null;
+  if (type !== 'error' && type !== 'progress' && timeout > 0) {
+    to = setTimeout(() => dismissNotification(id), timeout);
+  }
+  return {
+    id,
+    dismiss: () => dismissNotification(id),
+    update: (opts) => {
+      try {
+        const n = document.getElementById(id);
+        if (!n) return false;
+        if (opts.message !== undefined) n.querySelector('.message').textContent = String(opts.message);
+        if (opts.type) { n.className = `toast ${opts.type}`; n.setAttribute('role', opts.type === 'error' ? 'alert' : 'status'); }
+        return true;
+      }
+      catch (e) { return false; }
+    }
+  };
+}
+
+function dismissNotification(id) {
+  const n = document.getElementById(id);
+  if (!n) return;
+  if (n._timeout) clearTimeout(n._timeout);
+  n.remove();
+}
+
+async function withNotification(fn, { pendingMessage = 'Working…', successMessage = null, errorMessage = 'Operation failed', showSuccess = false } = {}) {
+  const toast = showNotification({ message: pendingMessage, type: 'progress', dismissible: false });
+  try {
+    const res = await fn();
+    toast.dismiss();
+    if (showSuccess && successMessage) showNotification({ message: successMessage, type: 'success' });
+    return res;
+  }
+  catch (err) {
+    toast.dismiss();
+    const errMsg = (errorMessage && typeof errorMessage === 'function') ? errorMessage(err) : (errorMessage || String(err));
+    showNotification({ message: errMsg || 'Error', type: 'error', dismissible: true, timeout: 0 });
+    throw err;
+  }
+}
+
 // # Persistence / Helpers
 
 function getConfigurationObject() {
@@ -553,23 +628,22 @@ async function saveToCloud() {
   if (!btn) return;
   btn.disabled = true;
   try {
-    const exportObj = createStateObject('ongoing', true);
-    const response = await fetch(CLOUD_SAVE_URL, {
-      method: 'POST',
-      mode: 'cors',
-      body: JSON.stringify(exportObj, null, 2),
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
+    await withNotification(async () => {
+      const exportObj = createStateObject('ongoing', true);
+      const response = await fetch(CLOUD_SAVE_URL, {
+        method: 'POST',
+        mode: 'cors',
+        body: JSON.stringify(exportObj, null, 2),
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        }
+      });
+      const result = await response.json();
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Unknown error');
       }
-    });
-    const result = await response.json();
-    if (result.status !== 'success') {
-      throw new Error(result.message || 'Unknown error');
-    }
-    console.log('State saved to cloud!');
-  }
-  catch (error) {
-    console.error('Failed to save state to cloud:', error);
+      console.log('State saved to cloud!');
+    }, { pendingMessage: 'Saving state to cloud…', successMessage: 'State saved to cloud', showSuccess: true, errorMessage: (err) => 'Failed to save state: ' + String(err) });
   }
   finally {
     btn.disabled = false;
@@ -577,7 +651,7 @@ async function saveToCloud() {
 }
 
 async function saveFinishedGameToCloud() {
-  try {
+  await withNotification(async () => {
     const exportObj = createStateObject('finished');
     const response = await fetch(CLOUD_SAVE_URL, {
       method: 'POST',
@@ -592,10 +666,7 @@ async function saveFinishedGameToCloud() {
       throw new Error(result.message || 'Unknown error');
     }
     console.log('Finished game state saved to cloud!');
-  }
-  catch (error) {
-    console.error('Failed to save finished game state to cloud:', error);
-  }
+  }, { pendingMessage: 'Saving finished game…', successMessage: 'Finished game saved', showSuccess: true, errorMessage: (err) => 'Failed to save finished game: ' + String(err) });
 }
 
 async function loadFromCloud() {
@@ -603,21 +674,20 @@ async function loadFromCloud() {
   if (!btn) return;
   btn.disabled = true;
   try {
-    const response = await fetch(CLOUD_SAVE_URL);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const parsed = await response.json();
-    if (loadStateObject(parsed)) {
-      saveAndRender();
-      console.log('State loaded from cloud!');
-    }
-    else {
-      console.error('Failed to load state from cloud');
-    }
-  }
-  catch (error) {
-    console.error('Failed to load state from cloud:', error);
+    await withNotification(async () => {
+      const response = await fetch(CLOUD_SAVE_URL);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const parsed = await response.json();
+      if (loadStateObject(parsed)) {
+        saveAndRender();
+        console.log('State loaded from cloud!');
+      }
+      else {
+        throw new Error('Failed to load state from cloud');
+      }
+    }, { pendingMessage: 'Loading state from cloud…', successMessage: 'State loaded', showSuccess: true, errorMessage: (err) => 'Failed to load state: ' + String(err) });
   }
   finally {
     btn.disabled = false;
@@ -1055,46 +1125,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // # Finished games viewer
 async function fetchFinishedFiles() {
-  try {
-    const url = CLOUD_SAVE_URL + '?request=list';
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('Network error');
-    const files = await resp.json();
-    const fileList = Array.isArray(files) ? files : [];
-    // Fetch each file's contents in parallel and build a metadata cache
-    const promises = fileList.map(async (fileName) => {
-      try {
-        const data = await loadFinishedFile(fileName);
-        const date = data && data['play-date'] ? new Date(data['play-date']) : null;
-        const gameName = data && data.game ? data.game : 'Unknown game';
-        let winners = [];
-        if (data && Array.isArray(data.players)) {
-          const scores = data.players.map(p => Number(p.score) || 0);
-          const max = scores.length ? Math.max(...scores) : 0;
-          winners = data.players.filter(p => (Number(p.score) || 0) === max).map(p => p.name);
+  return withNotification(async () => {
+    try {
+      const url = CLOUD_SAVE_URL + '?request=list';
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Network error');
+      const files = await resp.json();
+      const fileList = Array.isArray(files) ? files : [];
+      // Fetch each file's contents in parallel and build a metadata cache
+      const promises = fileList.map(async (fileName) => {
+        try {
+          const data = await loadFinishedFile(fileName);
+          const date = data && data['play-date'] ? new Date(data['play-date']) : null;
+          const gameName = data && data.game ? data.game : 'Unknown game';
+          let winners = [];
+          if (data && Array.isArray(data.players)) {
+            const scores = data.players.map(p => Number(p.score) || 0);
+            const max = scores.length ? Math.max(...scores) : 0;
+            winners = data.players.filter(p => (Number(p.score) || 0) === max).map(p => p.name);
+          }
+          return { fileName, data, date, gameName, winners };
         }
-        return { fileName, data, date, gameName, winners };
-      }
-      catch (e) {
-        console.warn('Failed to load finished file', fileName, e);
-        return { fileName, data: null, date: null, gameName: 'Unknown', winners: [] };
-      }
-    });
-    const results = await Promise.all(promises);
-    // store cache sorted by date desc (fallback to filename)
-    _finishedGamesCache = results.slice().sort((a, b) => {
-      const ta = a.date ? a.date.getTime() : 0;
-      const tb = b.date ? b.date.getTime() : 0;
-      if (tb !== ta) return tb - ta;
-      return b.fileName.localeCompare(a.fileName);
-    });
-    return _finishedGamesCache;
-  }
-  catch (e) {
-    console.error('Failed to fetch finished files:', e);
-    _finishedGamesCache = [];
-    return [];
-  }
+        catch (e) {
+          console.warn('Failed to load finished file', fileName, e);
+          return { fileName, data: null, date: null, gameName: 'Unknown', winners: [] };
+        }
+      });
+      const results = await Promise.all(promises);
+      // store cache sorted by date desc (fallback to filename)
+      _finishedGamesCache = results.slice().sort((a, b) => {
+        const ta = a.date ? a.date.getTime() : 0;
+        const tb = b.date ? b.date.getTime() : 0;
+        if (tb !== ta) return tb - ta;
+        return b.fileName.localeCompare(a.fileName);
+      });
+      return _finishedGamesCache;
+    }
+    catch (e) {
+      console.error('Failed to fetch finished files:', e);
+      _finishedGamesCache = [];
+      return [];
+    }
+  }, { pendingMessage: 'Loading finished games…', errorMessage: (err) => 'Failed to load finished games: ' + String(err) });
 }
 
 async function loadFinishedFile(fileName) {
@@ -1131,7 +1203,14 @@ function renderFinishedList(files, container) {
   files.forEach((entry) => {
     const tr = document.createElement('tr');
     const dateCell = document.createElement('td');
-    dateCell.textContent = entry.date ? entry.date.toISOString() : '';
+    // Format date as `YYYY-MM-DD hh:mm:ss` (strip milliseconds and Z)
+    const formatDateTime = (d) => {
+      try {
+        return d.toISOString().replace(/\.\d+Z$/, '').replace('T', ' ');
+      }
+      catch (e) { return '' }
+    };
+    dateCell.textContent = entry.date ? formatDateTime(entry.date) : '';
     const gameCell = document.createElement('td');
     gameCell.textContent = entry.gameName || '';
     const winnerCell = document.createElement('td');
@@ -1161,7 +1240,13 @@ function renderFinishedList(files, container) {
       winnerCell.textContent = '';
     }
     const actionCell = document.createElement('td');
-    const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'View'; btn.className = 'view-finished-btn';
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'view-finished-btn action';
+    // Initial icon + label for view
+    const setBtnState = (isOpen) => {
+      if (isOpen) btn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="label">Close</span>';
+      else btn.innerHTML = '<i class="fa-solid fa-eye" aria-hidden="true"></i><span class="label">View</span>';
+    };
+    setBtnState(false);
     // Prepare a details row that can be inserted after the entry row
     const detailsRow = document.createElement('tr');
     const detailsCell = document.createElement('td');
@@ -1173,7 +1258,7 @@ function renderFinishedList(files, container) {
       // If already open, close it
       if (btn.dataset.open === 'true') {
         if (detailsRow.parentNode) detailsRow.parentNode.removeChild(detailsRow);
-        btn.textContent = 'View';
+        setBtnState(false);
         btn.dataset.open = '';
         return;
       }
@@ -1243,7 +1328,7 @@ function renderFinishedList(files, container) {
       detailsCell.appendChild(wrapper);
       // Insert detailsRow after the entry row
       if (tr.parentNode) tr.parentNode.insertBefore(detailsRow, tr.nextSibling);
-      btn.textContent = 'Close';
+      setBtnState(true);
       btn.dataset.open = 'true';
     });
     actionCell.appendChild(btn);

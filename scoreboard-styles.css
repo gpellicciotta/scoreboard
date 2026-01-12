@@ -546,6 +546,47 @@ counter-input {
   border: 1px solid var(--muted-border)
 }
 
+/* Notifier / toast UI */
+#notifier {
+  position: fixed;
+  top: calc(var(--app-header-height) + 0.75rem);
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 300;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  min-width: 16rem;
+  max-width: 28rem;
+  background: var(--muted-bg);
+  color: var(--page-color);
+  border: 1px solid var(--muted-border);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.toast .message { flex: 1 1 auto; }
+.toast .actions { display: flex; gap: 0.4rem; align-items: center }
+.toast .dismiss { background: transparent; border: none; color: var(--page-color); cursor: pointer; padding: 0.25rem; border-radius: 0.35rem }
+.toast.info { border-left: 4px solid var(--blue); }
+.toast.success { border-left: 4px solid green; }
+.toast.error { border-left: 4px solid #d9534f; background: rgba(217,83,79,0.04); }
+.toast.progress { border-left: 4px solid var(--blue); }
+
+.toast .spinner {
+  width: 1rem; height: 1rem; border-radius: 50%; border: 2px solid rgba(255,255,255,0.06); border-top-color: var(--blue); animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 .header-actions button i {
   font-size: var(--font-size-regular);
   line-height: 1
@@ -1265,15 +1306,25 @@ button.sidebar-toggle {
   cursor: pointer;
 }
 
-#mounted-view .sidebar-toggle,
-#mounted-view .sidebar-toggle:hover,
-#mounted-view .sidebar-toggle:active {
+.button:hover {
+  background: var(--muted-hover);
+  border-color: var(--btn-hover);
+  color: var(--btn-hover);
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.default-view .sidebar-toggle,
+.default-view .sidebar-toggle:hover,
+.default-view .sidebar-toggle:active {
   pointer-events: none;
 }
 
-#mounted-view .button,
-#mounted-view .button:hover,
-#mounted-view .button:active {
+.default-view .button,
+.default-view .button:hover,
+.default-view .button:active {
   background: var(--blue);
   line-height: 1.25em;
   padding: 0.75rem;
@@ -1283,9 +1334,9 @@ button.sidebar-toggle {
   pointer-events: none;
 }
 
-#mounted-view .action,
-#mounted-view .action:hover,
-#mounted-view .action:active {
+.default-view .action,
+.default-view .action:hover,
+.default-view .action:active {
   color: var(--blue);
   border-color: var(--blue);
   background: var(--fixed-sidebar-bg);
@@ -1294,29 +1345,19 @@ button.sidebar-toggle {
   font-size: 75%;
 }
 
-#mounted-view h2 {
+.default-view h2 {
   font-size: 200%;
   padding-bottom: 1em;
 }
 
-#mounted-view p {
+.default-view p {
   line-height: 2em;
 }
 
-#mounted-view .note {
+.default-view .note {
   padding-top: 2em;
   font-size: small;
   color: var(--page-color);
-}
-
-.button:hover {
-  background: var(--muted-hover);
-  border-color: var(--btn-hover);
-  color: var(--btn-hover);
-}
-
-.button:active {
-  transform: translateY(1px);
 }
 
 /* Make icons smaller and centered so they visually align with counters */
@@ -1377,9 +1418,15 @@ button.sidebar-toggle {
   filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
 }
 
-.duel-victory-badge img {
-  width: 1.1rem;
-  height: auto;
+.duel-victory-badge img,
+img.duel-victory-badge,
+img.duel-victory-icon,
+img.duel-scientific-victory-icon {
+  /* Match the surrounding text height so victory badges align with player names */
+  height: 1em !important;
+  max-height: 1em !important;
+  width: auto !important;
+  object-fit: contain;
   margin-left: 0.4rem;
   vertical-align: middle;
 }
@@ -1585,8 +1632,12 @@ counter-input {
     width: 1.4rem;
   }
 
-  .duel-victory-badge img {
-    width: 0.95rem;
+  .duel-victory-badge img,
+  img.duel-victory-badge,
+  img.duel-victory-icon,
+  img.duel-scientific-victory-icon {
+    max-height: 0.95em !important;
+    width: auto !important;
   }
 }
 

@@ -6,7 +6,7 @@
 
 ## Releases
 
-### v1.2.0 - Not released yet
+### v2.0.0 - Not released yet
 - Bug fix to how cloud file naming for finished games is handled
 - UI improvement: no longer shift scoreboard when expanding sidebar
 - Making sure ranks are stored when finishing a game
@@ -17,6 +17,8 @@
 - Improved sidebar layout
 - Added welcome screen on first load
 - Improved mobile UI
+- Added notification area for long-running actions and also for showing errors/warnings
+- Improved finished games UI: better date formatting + show ranks for top-3 players in expanded view
 
 ### v1.0.0 - Initial Release (2025-01-03)
 - First version allowing to create scoreboards for simple games with multiple players.
