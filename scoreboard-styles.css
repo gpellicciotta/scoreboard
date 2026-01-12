@@ -1,12 +1,6 @@
 @import url('https://www.pellicciotta.com/hinolugi-support.js/css/reset.css');
 @import url('https://www.pellicciotta.com/hinolugi-support.js/css/colors.css');
 
-/*
-  Scoreboard main stylesheet — cleaned version
-  Sections: variables, base, header, content, sidebar, generic list,
-  seven-wonders (common), seven-wonders (duel/classic specifics), widgets
-*/
-
 :root {
   /* Theme variables */
   --main-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -195,8 +189,6 @@ counter-input {
   background: var(--btn-hover-bg);
   color: var(--btn-hover);
 }
-
-/* header spacing handled within the main .app-content block below */
 
 /* Ensure mounted views fill the content area; config editor needs full height */
 #mounted-view,
@@ -442,7 +434,8 @@ counter-input {
   top: var(--app-header-height);
   left: 0;
   /* limit sidebar height to viewport minus header so it doesn't overflow */
-  min-height: calc(100vh - var(--app-header-height));
+  height: calc(100vh - var(--app-header-height));
+  overflow-y: auto;
   width: var(--sidebar-collapsed-width);
   max-width: 85vw;
   background: var(--fixed-sidebar-bg);
@@ -1345,6 +1338,14 @@ button.sidebar-toggle {
   font-size: 75%;
 }
 
+.default-view {
+  
+}
+
+#mounted-view .default-view .view-content {
+  padding-bottom: calc(var(--app-header-height) + var(--app-header-height));
+}
+
 .default-view h2 {
   font-size: 200%;
   padding-bottom: 1em;
@@ -1640,5 +1641,3 @@ counter-input {
     width: auto !important;
   }
 }
-
-/* sidebar footer removed; theme toggle now lives with utilities */
