@@ -18,20 +18,30 @@
       <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
     <h1 id="app-title" class="app-title">SCOREBOARD</h1>
-    <div id="app-toolbar" class="app-toolbar"></div>
+    <div id="app-toolbar" class="app-toolbar">
+    </div>
   </header>
 
   <aside id="app-sidebar" class="app-sidebar collapsed sidebar-actions sidebar-content" role="complementary">
+    <!-- Primary actions (most used) -->
     <button id="new-game" aria-label="Create a new game">                           <i class="fa-solid fa-plus" aria-hidden="true"></i>            <span class="label">New Game</span></button>
+    <button id="finish-game" aria-label="Finish game and celebrate">                <i class="fa-solid fa-trophy" aria-hidden="true"></i>          <span class="label">Finish Game</span></button>
     <button id="scoreboard-reset" aria-label="Reset scores">                        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>    <span class="label">Reset Scores</span></button>
-    <button id="auto-sort-toggle" aria-pressed="true" aria-label="Toggle auto-sort"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>  <span class="label">Auto-sort</span></button>
+    <!-- Persistence actions -->
+    <div class="sidebar-sep" role="separator" aria-hidden="true"></div>
     <button id="export-json" aria-label="Export scores">                            <i class="fa-solid fa-download" aria-hidden="true"></i>        <span class="label">Export State</span></button>
     <button id="import-json" aria-label="Import scores">                            <i class="fa-solid fa-upload" aria-hidden="true"></i>          <span class="label">Import State</span></button>
     <button id="save-to-cloud" aria-label="Save to Cloud">                          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>  <span class="label">Save to Cloud</span></button>
     <button id="load-from-cloud" aria-label="Load from Cloud">                      <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i><span class="label">Load from Cloud</span></button>
     <button id="list-finished-games" aria-label="List finished games">              <i class="fa-solid fa-list" aria-hidden="true"></i>            <span class="label">Finished Games</span></button>
+    <!-- Utilities -->
+    <div class="sidebar-sep" role="separator" aria-hidden="true"></div>
     <button id="configure-json" aria-label="Configure">                             <i class="fa-solid fa-gear" aria-hidden="true"></i>            <span class="label">Configure</span></button>
-    <button id="finish-game" aria-label="Finish game and celebrate">                <i class="fa-solid fa-trophy" aria-hidden="true"></i>          <span class="label">Finish Game</span></button>
+    <button id="auto-sort-toggle" aria-pressed="true" aria-label="Toggle auto-sort"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i>  <span class="label">Auto-sort</span></button>
+    <button id="theme-toggle" title="Toggle theme">
+      <i class="fa-solid fa-sun"></i>
+      <span class="label">Switch to Dark Theme</span>
+    </button>   
   </aside>
 
   <main id="app-content" class="app-content" role="main">

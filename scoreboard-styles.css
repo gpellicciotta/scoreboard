@@ -12,8 +12,7 @@
   --main-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --monospace-font: monospace;
   --font-size: 1rem;
-  --page-bg: rgb(17, 17, 17);
-  --page-color: rgb(238, 238, 238);
+  --fixed-sidebar-bg: rgb(27, 27, 27);
 
   /* Font weights / sizes */
   --font-weight-normal: 400;
@@ -23,16 +22,6 @@
   --font-size-regular: 1rem;
   --font-size-small: 0.98rem;
   --font-size-x-small: 0.95rem;
-
-  /* Colors */
-  --blue: rgb(37, 99, 235);
-  --sidebar-bg: rgb(27, 27, 27);
-  --btn-contrast: #ffffff;
-  --muted-bg: rgba(255, 255, 255, 0.02);
-  --muted-hover: rgba(255, 255, 255, 0.03);
-  --muted-border: rgba(255, 255, 255, 0.06);
-  --shadow: rgba(0, 0, 0, 0.08);
-  --config-editor-bg: rgba(0, 0, 0, 0.35);
 
   /* Layout */
   --app-header-height: 3.5rem;
@@ -48,11 +37,6 @@
   --spacing: 1rem;
   --spacing-sm: 0.5rem;
   --spacing-xs: 0.25rem;
-  /* Button / action colors */
-  --btn-hover: var(--blue);
-  --btn-active: #ffd700; /* gold */
-  --btn-hover-bg: rgba(37, 99, 235, 0.04);
-  --btn-active-bg: rgba(255, 215, 0, 0.08);
 
   /* Ranking colors */
   --rank-gold: #ffd700;
@@ -61,9 +45,60 @@
   --rank-silver: #c0c0c0;
   --rank-bronze: #cd7f32;
   --rank-last: #6b6b6b;
+  /* Per-rank text color variables (can be overridden per theme) */
+  --rank-gold-text: var(--rank-contrast-dark);
+  --rank-silver-text: var(--rank-contrast-dark);
+  --rank-bronze-text: var(--btn-contrast);
+  --rank-last-text: var(--btn-contrast);
   /* Classic scoreboard column sizing (min / max) */
   --classic-player-min-width: 12rem;
   --classic-player-max-width: 15rem;
+}
+
+[data-theme="dark"] {
+  --page-bg: rgb(17, 17, 17);
+  --page-color: rgb(238, 238, 238);
+  /* Sidebar/header background for dark theme */
+  --fixed-sidebar-bg: rgb(27, 27, 27);
+  --blue: rgb(37, 99, 235);
+  --btn-contrast: #ffffff;
+  --muted-bg: rgba(255, 255, 255, 0.02);
+  --muted-hover: rgba(255, 255, 255, 0.03);
+  --muted-border: rgba(255, 255, 255, 0.06);
+  --shadow: rgba(0, 0, 0, 0.08);
+  --config-editor-bg: rgba(0, 0, 0, 0.35);
+  --btn-hover: var(--blue);
+  --btn-active: #ffd700; /* gold */
+  --btn-hover-bg: rgba(37, 99, 235, 0.04);
+  --btn-active-bg: rgba(255, 215, 0, 0.08);
+  /* Rank badge text colors for dark theme */
+  --rank-gold-text: var(--rank-contrast-dark);
+  --rank-silver-text: var(--rank-contrast-dark);
+  --rank-bronze-text: var(--btn-contrast);
+  --rank-last-text: var(--btn-contrast);
+}
+
+[data-theme="light"] {
+  --page-bg: rgb(255, 255, 255);
+  --page-color: rgb(20, 20, 20);
+  --blue: rgb(37, 99, 235);
+  --btn-contrast: #ffffff;
+  --muted-bg: rgba(0, 0, 0, 0.02);
+  --muted-hover: rgba(0, 0, 0, 0.03);
+  --muted-border: rgba(0, 0, 0, 0.06);
+  --shadow: rgba(0, 0, 0, 0.08);
+  --config-editor-bg: rgba(0, 0, 0, 0.05);
+  --btn-hover: var(--blue);
+  --btn-active: #ddb700; /* gold */
+  --btn-hover-bg: rgba(37, 99, 235, 0.04);
+  --btn-active-bg: rgba(255, 215, 0, 0.08);
+  /* Make header/sidebar light in the light theme so labels remain readable */
+  --fixed-sidebar-bg: rgb(250, 250, 250);
+  /* Rank badge text colors for light theme */
+  --rank-gold-text: var(--rank-contrast-dark);
+  --rank-silver-text: var(--rank-contrast-dark);
+  --rank-bronze-text: var(--rank-contrast-dark);
+  --rank-last-text: var(--rank-contrast-dark);
 }
 
 /* Base */
@@ -79,6 +114,7 @@ body {
   color: var(--page-color);
   font-family: var(--main-font);
   font-size: var(--font-size);
+  color-scheme: dark light;
 }
 
 /* Counter-input defaults (themeable via --counter-* variables) */
@@ -110,12 +146,13 @@ counter-input {
   left: 0;
   right: 0;
   height: var(--app-header-height);
-  background: var(--sidebar-bg);
+  background: var(--fixed-sidebar-bg);
   border-bottom: 1px solid var(--muted-border);
   display: flex;
   align-items: center;
   padding: 0 var(--spacing);
   z-index: 110;
+  transition: background-color .18s ease, border-color .18s ease;
 }
 
 /* App toolbar (contextual) — now rendered inside the header */
@@ -406,11 +443,11 @@ counter-input {
   min-height: calc(100vh - var(--app-header-height));
   width: var(--sidebar-collapsed-width);
   max-width: 85vw;
-  background: var(--sidebar-bg);
-  background-color: rgba(27,27,27,1);
+  background: var(--fixed-sidebar-bg);
   border-right: 1px solid var(--muted-border);
   z-index: 80;
   display: flex;
+  transition: background-color .18s ease, border-color .18s ease;
 }
 
 .app-sidebar .sidebar-content,
@@ -420,9 +457,17 @@ counter-input {
   gap: .5rem;
   align-items: stretch;
   padding: 1rem;
-  background: var(--sidebar-bg);
+  background: var(--fixed-sidebar-bg);
   transform: translateX(-100%);
   transition: transform .22s cubic-bezier(.2, .8, .2, 1);
+  justify-content: space-between;
+}
+
+/* Visual divider used to group related sidebar actions */
+.sidebar-sep {
+  height: 1px;
+  margin: 0.5rem 0;
+  background: linear-gradient(90deg, transparent, var(--muted-border), transparent);
 }
 
 .app-sidebar.collapsed .sidebar-content,
@@ -516,22 +561,22 @@ counter-input {
 /* Ranking colours */
 .score-item.rank-gold .score-value {
   background: var(--rank-gold);
-  color: var(--rank-contrast-dark)
+  color: var(--rank-gold-text)
 }
 
 .score-item.rank-silver .score-value {
   background: var(--rank-silver);
-  color: var(--rank-contrast-dark)
+  color: var(--rank-silver-text)
 }
 
 .score-item.rank-bronze .score-value {
   background: var(--rank-bronze);
-  color: var(--btn-contrast)
+  color: var(--rank-bronze-text)
 }
 
 .score-item.rank-last .score-value {
   background: var(--rank-last);
-  color: var(--btn-contrast)
+  color: var(--rank-last-text)
 }
 
 .score-item.rank-gold {
@@ -1190,6 +1235,12 @@ button.sidebar-toggle {
   display: contents;
 }
 
+.columns.classic-columns > .col.icons > * {
+  position: sticky;
+  left: 0;
+  z-index: 30; /* Sit above scrolling player columns */;
+}
+
 /* Center common elements inside their grid cells (classic) */
 .columns.classic-columns > .col.icons > *,
 .columns.classic-columns > .col.player > * {
@@ -1273,3 +1324,5 @@ counter-input {
   .columns.duel-columns > .col.icons img { width: 1.4rem; }
   .duel-victory-badge img { width: 0.95rem; }
 }
+
+/* sidebar footer removed; theme toggle now lives with utilities */

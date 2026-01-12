@@ -694,6 +694,63 @@ function initSidebar() {
   }
 }
 
+function initTheme() {
+  const themeToggle = el('theme-toggle');
+  if (!themeToggle) return;
+  // Determine preferred theme. Behavior:
+  // - If a user selection ('light' or 'dark') is stored in localStorage under 'theme', use it.
+  // - Otherwise follow the system preference (matchMedia). When following system preference,
+  //   the UI will also update if the system preference changes.
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+
+  const getStoredPreference = () => localStorage.getItem('theme');
+
+  // Set theme; when `persist` is true, update localStorage. When false, do not write (used for
+  // following system preference without overwriting the user's stored choice).
+  const setTheme = (theme, persist = false) => {
+    document.body.dataset.theme = theme;
+    if (persist) localStorage.setItem('theme', theme);
+    const icon = themeToggle.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('fa-sun', theme === 'light');
+      icon.classList.toggle('fa-moon', theme === 'dark');
+    }
+    try { themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false'); } catch (e) {}
+    const lbl = themeToggle.querySelector('.label');
+    if (lbl) lbl.textContent = theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
+  };
+
+  // Toggle invoked by the user — persist their explicit choice.
+  themeToggle.addEventListener('click', () => {
+    const current = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    setTheme(next, true);
+  });
+
+  // Initialize: use stored preference if it is 'dark'|'light'. Otherwise follow system.
+  const stored = getStoredPreference();
+  if (stored === 'dark' || stored === 'light') {
+    setTheme(stored, false);
+  }
+  else {
+    // follow system preference initially (do not persist)
+    setTheme(mq.matches ? 'dark' : 'light', false);
+    // update theme on system changes only when no explicit user preference exists
+    const onPrefChange = (e) => {
+      // re-check stored value; if now set, stop following system
+      const nowStored = getStoredPreference();
+      if (nowStored === 'dark' || nowStored === 'light') return;
+      setTheme(e.matches ? 'dark' : 'light', false);
+    };
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', onPrefChange);
+    }
+    else if (typeof mq.addListener === 'function') {
+      mq.addListener(onPrefChange);
+    }
+  }
+}
+
 function initImportExport() {
   const resetBtn = el('scoreboard-reset');
   if (resetBtn) resetBtn.addEventListener('click', () => {
@@ -965,6 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   render();
   initSidebar();
+  initTheme();
   initImportExport();
   initConfigure();
   initListControls();
