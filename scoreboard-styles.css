@@ -595,6 +595,76 @@ counter-input {
   border: 1px solid var(--rank-last)
 }
 
+/* Make the small increase/decrease controls match the player's rank
+   in the generic scoreboard list (rank-gold/rank-silver/rank-bronze). */
+.score-item.rank-gold .score-controls button {
+  background: var(--rank-gold);
+  border-color: var(--rank-gold);
+  color: var(--rank-gold-text);
+}
+.score-item.rank-gold .score-controls button:hover {
+  background: color-mix(in srgb, var(--rank-gold) 85%, black 15%);
+  border-color: color-mix(in srgb, var(--rank-gold) 85%, black 15%);
+  filter: none;
+}
+
+.score-item.rank-gold .score-controls button:active {
+  background: color-mix(in srgb, var(--rank-gold) 75%, black 25%);
+  border-color: color-mix(in srgb, var(--rank-gold) 75%, black 25%);
+  transform: translateY(1px);
+}
+
+.score-item.rank-silver .score-controls button {
+  background: var(--rank-silver);
+  border-color: var(--rank-silver);
+  color: var(--rank-silver-text);
+}
+.score-item.rank-silver .score-controls button:hover {
+  background: color-mix(in srgb, var(--rank-silver) 85%, black 15%);
+  border-color: color-mix(in srgb, var(--rank-silver) 85%, black 15%);
+  filter: none;
+}
+
+.score-item.rank-silver .score-controls button:active {
+  background: color-mix(in srgb, var(--rank-silver) 75%, black 25%);
+  border-color: color-mix(in srgb, var(--rank-silver) 75%, black 25%);
+  transform: translateY(1px);
+}
+
+.score-item.rank-bronze .score-controls button {
+  background: var(--rank-bronze);
+  border-color: var(--rank-bronze);
+  color: var(--rank-bronze-text);
+}
+.score-item.rank-bronze .score-controls button:hover {
+  background: color-mix(in srgb, var(--rank-bronze) 85%, black 15%);
+  border-color: color-mix(in srgb, var(--rank-bronze) 85%, black 15%);
+  filter: none;
+}
+
+.score-item.rank-bronze .score-controls button:active {
+  background: color-mix(in srgb, var(--rank-bronze) 75%, black 25%);
+  border-color: color-mix(in srgb, var(--rank-bronze) 75%, black 25%);
+  transform: translateY(1px);
+}
+
+.score-item.rank-last .score-controls button {
+  background: var(--rank-last);
+  border-color: var(--rank-last);
+  color: var(--rank-last-text);
+}
+.score-item.rank-last .score-controls button:hover {
+  background: color-mix(in srgb, var(--rank-last) 85%, black 15%);
+  border-color: color-mix(in srgb, var(--rank-last) 85%, black 15%);
+  filter: none;
+}
+
+.score-item.rank-last .score-controls button:active {
+  background: color-mix(in srgb, var(--rank-last) 75%, black 25%);
+  border-color: color-mix(in srgb, var(--rank-last) 75%, black 25%);
+  transform: translateY(1px);
+}
+
 /* Generic buttons */
 .app-content button,
 .app-sidebar button {
