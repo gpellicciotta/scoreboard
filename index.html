@@ -18,8 +18,7 @@
       <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
     <h1 id="app-title" class="app-title">SCOREBOARD</h1>
-    <div id="app-toolbar" class="app-toolbar">
-    </div>
+    <div id="app-toolbar" class="app-toolbar"></div>
   </header>
 
   <aside id="app-sidebar" class="app-sidebar collapsed sidebar-actions sidebar-content" role="complementary">
@@ -46,7 +45,18 @@
 
   <main id="app-content" class="app-content" role="main">
     <!-- Default views container -->
-    <div id="default-views"></div>
+    <div id="default-view">    
+      <h2 class="view-title">Welcome to Scoreboard</h2>
+      <div class="view-toolbar"></div>
+      <div class="view-content">
+        <p>This simple scoreboard helps you track player scores across different games.
+           To get started, choose <strong class="action">New Game</strong> from the sidebar, add or edit players via
+           <strong class="action">Configure</strong>, 
+           then use the <span class="button">+</span> / <span class="button">-</span> controls next to each player to adjust scores.
+           When finished, use <strong class="action">Finish Game</strong> and optionally <strong class="action">Save to Cloud</strong> to archive results.</p>
+        <p class="note">Tip: Auto-sort keeps the leaderboard ordered by score. Use the auto-sort toggle in Utilities.</p>
+      </div>
+    </div>
 
     <!-- Templates for main views -->
     <template id="tpl-generic">

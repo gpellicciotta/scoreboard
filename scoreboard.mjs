@@ -35,7 +35,7 @@ const MARK_LAST = false; // Set to `true` to mark the lowest-ranked participant 
 
 // Scoreboard state
 let state = {
-  "game": "unknown",
+  "game": "",
   "play-date": null,
   "status": "ongoing",
   "auto-sort": DEFAULT_AUTO_SORT,
@@ -160,7 +160,7 @@ const el = (id) => document.getElementById(id);
 // Simple view manager: mount templates into `app-content` and show/hide default views
 const appContent = () => el('app-content');
 const appToolbar = () => el('app-toolbar');
-const defaultViews = () => el('default-views');
+const defaultViews = () => el('default-view');
 
 function showView(templateId, onMount) {
   const app = appContent();
@@ -177,7 +177,7 @@ function showView(templateId, onMount) {
   const existing = document.getElementById('mounted-view');
   if (existing) existing.remove();
   // Mount new view
-  const mount = document.createElement('div'); 
+  const mount = document.createElement('div');
   mount.id = 'mounted-view';
   mount.appendChild(tpl.content.cloneNode(true));
   app.appendChild(mount);
@@ -188,13 +188,12 @@ function showView(templateId, onMount) {
     toolbarHost.innerHTML = '';
   }
   if (toolbar && toolbarHost) {
-    // Move the toolbar's children into the app-toolbar (preserve event listeners)
-    while (toolbar.firstChild) {
-      toolbarHost.appendChild(toolbar.firstChild);
-    }
+    // Clone toolbar children so the persistent default view keeps its toolbar
+    Array.from(toolbar.children).forEach(ch => toolbarHost.appendChild(ch.cloneNode(true)));
     // Remove the now-empty toolbar wrapper from the mounted view
     toolbar.remove();
   }
+
 
   // If the template provided a view-title, use it as the app title
   let viewTitle = mount.querySelector('.view-title');
@@ -235,6 +234,15 @@ function closeView() {
   const def = defaultViews();
   if (def) {
     def.hidden = false;
+    // If the default view provides a toolbar, move its children into the header toolbar
+    try {
+      const viewToolbar = def.querySelector && def.querySelector('.view-toolbar');
+      if (viewToolbar && toolbarHost) {
+        // Clone toolbar children so the persistent default view keeps its toolbar
+        Array.from(viewToolbar.children).forEach(ch => toolbarHost.appendChild(ch.cloneNode(true)));
+      }
+    }
+    catch (e) { }
   }
   // Restore title based on current state
   updateTitle();
@@ -285,6 +293,15 @@ function updateTitle() {
   const titleEl = el('app-title');
   if (!titleEl) {
     return;
+  }
+  // If the default view is visible and provides a view-title, prefer that
+  const def = defaultViews();
+  if (def && !def.hidden) {
+    const viewTitle = def.querySelector && def.querySelector('.view-title');
+    if (viewTitle && viewTitle.textContent && viewTitle.textContent.trim().length) {
+      titleEl.textContent = viewTitle.textContent.trim();
+      return;
+    }
   }
   if (state.game && state.game.trim().length > 0) {
     titleEl.textContent = `${state.game} Scores`;
@@ -377,7 +394,7 @@ function recalculateDuelScore(player) {
     const value = Number(player['play-details'][category] || 0);
     if (category === 'money-coins') {
       total += Math.floor(value / 3);
-    } 
+    }
     else {
       total += value;
     }
@@ -452,7 +469,7 @@ function renderDuelScoreboard(container, players) {
       sumEl.textContent = isImmediate ? '∞' : String(p.score);
       if (p.score === maxScore && maxScore > 0) {
         sumEl.classList.add('highest-score');
-      } 
+      }
       else {
         sumEl.classList.remove('highest-score');
       }
@@ -468,7 +485,7 @@ function recalculateClassicScore(player) {
     const value = Number(player['play-details'][category] || 0);
     if (category === 'money-coins') {
       total += Math.floor(value / 3);
-    } 
+    }
     else {
       total += value;
     }
@@ -664,13 +681,13 @@ function initSidebar() {
     sidebar.classList.toggle('expanded', expanded);
     sidebarToggle.classList.toggle('expanded', expanded);
     if (icon) {
-      if (expanded) { 
-        icon.classList.remove('fa-bars'); 
-        icon.classList.add('fa-xmark'); 
+      if (expanded) {
+        icon.classList.remove('fa-bars');
+        icon.classList.add('fa-xmark');
       }
-      else { 
-        icon.classList.remove('fa-xmark'); 
-        icon.classList.add('fa-bars'); 
+      else {
+        icon.classList.remove('fa-xmark');
+        icon.classList.add('fa-bars');
       }
     }
   };
@@ -715,7 +732,7 @@ function initTheme() {
       icon.classList.toggle('fa-sun', theme === 'light');
       icon.classList.toggle('fa-moon', theme === 'dark');
     }
-    try { themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false'); } catch (e) {}
+    try { themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false'); } catch (e) { }
     const lbl = themeToggle.querySelector('.label');
     if (lbl) lbl.textContent = theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
   };
@@ -927,13 +944,13 @@ function initFinishGame() {
     let finalUrl = cfg;
     if (cfg && cfg.indexOf('{{MESSAGE}}') !== -1) {
       finalUrl = cfg.split('{{MESSAGE}}').join(encoded);
-    } 
+    }
     else {
       // Append message to end of URL; if URL already has query params add '&' otherwise add '?'
       if (cfg && cfg.length) {
         const sep = cfg.indexOf('?') !== -1 ? '&' : '?';
         finalUrl = cfg + sep + encoded;
-      } 
+      }
       else {
         finalUrl = 'celebration.html?s=10&msg=' + encoded;
       }
@@ -1007,6 +1024,7 @@ function initNewGame() {
 
 document.addEventListener('DOMContentLoaded', () => {
   tpl = document.getElementById('score-item-template');
+  const hasSavedState = Boolean(localStorage.getItem(LOCAL_STORAGE_KEY));
   load();
   if (!state.players || state.players.length === 0) {
     state.players = DEFAULT_NAMES.map(n => ({ name: n, score: 0, 'play-details': {} }));
@@ -1020,7 +1038,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof state.celebrationLink === 'undefined') {
     state.celebrationLink = DEFAULT_CELEBRATION_LINK;
   }
-  render();
+  // If there is saved state, render it; otherwise keep the welcome/default view
+  if (hasSavedState) {
+    render();
+  }
+  else {
+    // If no saved state, copy default view toolbar into the app toolbar
+    const def = defaultViews();
+    if (def) {
+      const viewToolbar = def.querySelector('.view-toolbar');
+      const toolbarHost = appToolbar();
+      if (viewToolbar && toolbarHost) {
+        toolbarHost.innerHTML = '';
+        // Clone toolbar children so the persistent default view keeps its toolbar
+        Array.from(viewToolbar.children).forEach(ch => toolbarHost.appendChild(ch.cloneNode(true)));
+      }
+    }
+    // Ensure header title reflects the default view
+    updateTitle();
+  }
   initSidebar();
   initTheme();
   initImportExport();
