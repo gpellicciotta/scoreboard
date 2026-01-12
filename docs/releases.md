@@ -3,7 +3,6 @@
 ## Todo's 
 - [ ] Re-use more code from hinolugi-utils.js
 - [ ] Re-structure as the counters app is structured
-- [ ] Improve the color scheme and ensure both dark/light modes are well supported
 
 ## Releases
 
@@ -13,6 +12,8 @@
 - Making sure ranks are stored when finishing a game
 - Fixed bug in side bar bottom action not being visible in mobile mode
 - Much improved UI for Seven Wonders games, now also allowing for Military and Scientific victories in the Duel edition
+- Updated documentation
+- Added theme switch action for dark/light mode
 
 ### v1.0.0 - Initial Release (2025-01-03)
 - First version allowing to create scoreboards for simple games with multiple players.

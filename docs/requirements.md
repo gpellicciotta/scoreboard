@@ -28,7 +28,6 @@ live-server
 - `scoreboard.mjs` — frontend application logic
 - `scoreboard-styles.css` — main stylesheet
 - `scoreboard-backend.js` — Google Apps Script backend (optional deploy to enable cloud save/load)
-- `seven-wonders*.html` and `.mjs` — game-specific variants
 
 ## Google Drive Backend Requirements
 

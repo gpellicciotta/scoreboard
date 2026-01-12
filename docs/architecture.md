@@ -52,74 +52,75 @@ It exposes following properties:
     *   `score` (number): The player's current score.
     *   `play-details` (Object): A flexible object to store game-specific details for a player.
 
-
 ## Frontend-to-Backend Communication
 
-The communication between the frontend and backend is handled via `fetch` API calls from the frontend JavaScript to the deployed Google Apps Script URL.
+The frontend and backend communicate over HTTP using `fetch`. 
 
-### Saving Data (POST Request)
+The implementation details are:
+- The frontend uses a constant named `CLOUD_SAVE_URL` in `scoreboard.mjs` as the request target. To change the target used by the shipped frontend, edit `CLOUD_SAVE_URL` in `scoreboard.mjs` and reload the page.
+- Save: frontend sends a `POST` to `CLOUD_SAVE_URL` with the JSON string produced by `createStateObject()` as the request body. The frontend sets the header `Content-Type: text/plain;charset=utf-8` and calls `response.json()` on the reply.
+- Load: frontend sends a `GET` to `CLOUD_SAVE_URL` and expects a JSON body containing the saved state.
+- Finished games: the frontend uses query parameters to enumerate and load finished-game files: `?request=list` returns a list of filenames, and `?request=load&file=<fileName>` returns the JSON content for a specific finished-game file. The frontend expects JSON responses for these calls.
 
-When the user initiates a "save to cloud" action, the frontend sends an HTTP `POST` request to the Google Apps Script URL.
+The backend exposed by `scoreboard-backend.js` implements `doGet` and `doPost` and uses Google Drive (via `DriveApp`) to store and retrieve JSON files. The frontend expects the backend responses to be valid JSON objects representing saved state or operation results.
 
-*   **Method:** `POST`
-*   **Headers:**
-    *   `Content-Type: text/plain;charset=utf-8`
-*   **Request Body:** The body contains a JSON string created by the `createStateObject` function. This function packages the current state and sets a `status` (e.g., 'ongoing' or 'finished') and updates the `play-date`.
+Operational note: the repository includes `scoreboard-config.json` as an example/import file; the running app does not automatically read it.
 
-    *Example Request Body:*
-    ```json
-    {
-      "game": "Seven Wonders",
-      "play-date": "2026-01-01T13:00:00.000Z",
-      "status": "ongoing",
-      "auto-sort": true,
-      "celebration-link": "https://example.com/celebrate?msg={{MESSAGE}}",
-      "players": [
-        { "name": "Alice", "score": 42, "play-details": {} },
-        { "name": "Bob", "score": 50, "play-details": {} }
-      ]
+### Request / Response Schemas
+
+The JSON Schema for saved state looks as follows:
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "game": { "type": ["string", "null"] },
+    "play-date": { "type": ["string", "null"], "format": "date-time" },
+    "status": { "type": ["string", "null"] },
+    "auto-sort": { "type": "boolean" },
+    "celebration-link": { "type": "string" },
+    "players": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name","score"],
+        "properties": {"name":{"type":"string"},"score":{"type":"number"},"play-details":{"type":"object"}}
+      }
     }
-    ```
+  },
+  "required": ["players"]
+}
+```
 
-*   **Backend Response:** The Google Apps Script's `doPost` function processes the request. It saves the data and returns a JSON response indicating the outcome.
+POST save response (success):
 
-    *Example Success Response:*
-    ```json
-    {
-      "status": "success"
-    }
-    ```
-    *Example Error Response:*
-    ```json
-    {
-      "status": "error",
-      "message": "Failed to save file."
-    }
-    ```
+```json
+{ "status": "success", "savedAt": "2026-01-01T13:00:00.000Z" }
+```
 
-### Loading Data (GET Request)
+Error response pattern:
 
-When the user initiates a "load from cloud" action, the frontend sends an HTTP `GET` request.
+```json
+{ "status": "error", "code": "SAVE_FAILED", "message": "Human-readable error" }
+```
 
-*   **Method:** `GET`
-*   **Headers:** Standard browser headers.
-*   **Request Body:** None.
+### Headers & Content-Type
 
-*   **Backend Response:** The `doGet` function in the script reads the saved JSON file from Google Drive and returns its content in the response body. The frontend parses this JSON to restore its state.
+- The frontend as shipped sets `Content-Type: text/plain;charset=utf-8` for POST requests (see `saveToCloud()` / `saveFinishedGameToCloud()` in `scoreboard.mjs`). The backend in `scoreboard-backend.js` parses the request body as JSON.
+- Responses are expected to be JSON and the frontend calls `response.json()` after fetch.
+- CORS: Apps Script must be deployed and return appropriate CORS headers when the frontend origin differs from the script's origin; ensure `doGet`/`doPost` include `Access-Control-Allow-Origin` as needed for your deployment.
 
-    *Example Response Body:*
-    ```json
-    {
-      "game": "Seven Wonders",
-      "play-date": "2026-01-01T13:00:00.000Z",
-      "status": "ongoing",
-      "auto-sort": true,
-      "celebration-link": "https://example.com/celebrate?msg={{MESSAGE}}",
-      "players": [
-        { "name": "Alice", "score": 42, "play-details": {} },
-        { "name": "Bob", "score": 50, "play-details": {} }
-      ]
-    }
-    ```
+### Backend query parameters for finished games
 
-This architecture is simple and cost-effective, leveraging Google's infrastructure. It requires the user to be logged into a Google account and to grant the necessary permissions for the script to access their Google Drive.
+- The frontend requests a list of finished files using `CLOUD_SAVE_URL + '?request=list'` and loads individual finished-game files with `CLOUD_SAVE_URL + '?request=load&file=' + encodeURIComponent(fileName)`; the backend should support these query patterns and return JSON.
+
+### Authentication & Scopes
+
+- The Apps Script runs under the end-user's Google account. The user must authorize the script to use Drive APIs. Typical scopes: `https://www.googleapis.com/auth/drive.file` (recommended) or `https://www.googleapis.com/auth/drive` (broader).
+- No separate API key is required for the typical per-user Drive file approach; Apps Script will show an authorization prompt when the user first runs an action that requires Drive access.
+
+### Operational Notes
+
+- To deploy: open the Apps Script editor, select **Deploy → New deployment → Web app**, choose appropriate access (e.g., "Only myself" or "Anyone within domain"), and copy the web app URL into `scoreboard-config.json`.
+- To debug: use `Logger.log()` in `scoreboard-backend.js` and view logs via **Executions** or **My Executions** in the Apps Script console.

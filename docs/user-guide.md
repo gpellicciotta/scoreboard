@@ -4,7 +4,7 @@ This guide explains how to use the Hinolugi Scoreboard frontend and the optional
 
 The app tracks scores for multiple players in a game session. It supports local import/export of JSON files and optional cloud save/load via a Google Apps Script backend.
 
-## Opening the app (development)
+## Testing the app locally
 
 1. Serve the project directory on a local HTTP server and open `http://localhost:<port>/` in a modern browser. Example commands:
 
@@ -23,7 +23,7 @@ npx live-server
 
 Note: The UI uses modern CSS features (Grid / Flexbox). Use an up-to-date Chromium, Edge, Firefox, or Safari for the best experience.
 
-## Common actions (UI labels)
+## Common actions
 
 - `New Game`: start a new session with default player names.
 - `Reset Scores`: set all player scores to zero.
@@ -49,8 +49,8 @@ The app uses a compact JSON structure. Example export:
   "auto-sort": true,
   "celebration-link": "https://example.com/celebrate?message={{MESSAGE}}",
   "players": [
-    { "name": "Alice", "score": 42 },
-    { "name": "Bob", "score": 50 }
+    { "name": "Alice", "score": 42, "play-details": {} },
+    { "name": "Bob", "score": 50, "play-details": {} }
   ]
 }
 ```
@@ -104,8 +104,35 @@ Common failure modes:
 
 ## Configuration
 
-- `celebration-link`: URL template used when finishing a game. Replace `{{MESSAGE}}` with the desired message.
-- `auto-sort`: boolean persisted in state.
+Note: the app's runtime "configuration" editor (the `Configure` button) edits the persisted application *state* (game, players, auto-sort, celebration link). There is no separate runtime config loader — the example `scoreboard-config.json` in the repo is an example/import file and is not automatically applied by the running app.
+
+Persisted keys (what the app actually reads/writes)
+
+- `game` (string | null): current game name.
+- `players` (array): array of player objects. Each player: `{ "name": string, "score": number, "play-details"?: object }`.
+- `play-date` (string | null): ISO timestamp (set when saving/exporting).
+- `status` (string): `ongoing` | `finished`.
+- `auto-sort` (boolean): whether the UI auto-sorts players by score.
+- `celebration-link` (string): celebration URL template using `{{MESSAGE}}`.
+
+Where to change values
+
+- In the running app: open the sidebar `Configure` button, edit the JSON and click `Save` — this updates the persisted state in `localStorage` and updates the UI.
+- For development/example data: edit `scoreboard-config.json` in the repository and use the app's `Import State` to load it (the app does not automatically read this file on startup).
+- To change the cloud endpoint used for `Save to Cloud` / `Load from Cloud`: edit the `CLOUD_SAVE_URL` constant in `scoreboard.mjs` (search for `CLOUD_SAVE_URL` and replace the URL), then rebuild/refresh the page.
+
+Local storage key
+
+- The app persists state under the key `scoreboard.v${APP_VERSION}` (for this release the key is `scoreboard.v1.2.0`). Clearing this key resets the app state. Example to clear from the console:
+
+```js
+localStorage.removeItem('scoreboard.v1.2.0');
+```
+
+Security & operational notes
+
+- Do not assume `scoreboard-config.json` is a secure place for secrets; the app does not use it at runtime.
+- The example backend (`scoreboard-backend.js`) is deployed as a Google Apps Script Web App and will require Drive permissions when used.
 
 ## Troubleshooting & debugging
 
@@ -117,13 +144,8 @@ Common failure modes:
 localStorage.removeItem('scoreboard.v1.2.0');
 ```
 
-  (The storage key follows the pattern `scoreboard.v<version>`; the app's `APP_VERSION` is visible in `scoreboard.mjs`.)
-
+- The storage key follows the pattern `scoreboard.v<version>`; the app's `APP_VERSION` is visible in `scoreboard.mjs`.
 - For cloud errors, open the Web App URL in a browser to test it directly and review Apps Script logs for failures.
 
-## Notes and optional additions
 
-- Accessibility: UI includes basic ARIA attributes; further keyboard shortcuts or improved focus handling can be added.
-- Screenshots or a step-by-step walkthrough (New Game  Configure  Finish Game) would help new users  I can add these on request.
 
-If you want, I can apply further polish (screenshots, keyboard accessibility details, or a short quick-start section).
