@@ -454,12 +454,7 @@ function recalculateDuelScore(player) {
   for (const categoryName in DUEL_CATEGORIES) {
     const category = DUEL_CATEGORIES[categoryName];
     const value = Number(player['play-details'][category] || 0);
-    if (category === 'money-coins') {
-      total += Math.floor(value / 3);
-    }
-    else {
-      total += value;
-    }
+    total += value;
   }
   player.score = total;
 }
@@ -545,12 +540,7 @@ function recalculateClassicScore(player) {
   for (const categoryName in CLASSIC_CATEGORIES) {
     const category = CLASSIC_CATEGORIES[categoryName];
     const value = Number(player['play-details'][category] || 0);
-    if (category === 'money-coins') {
-      total += Math.floor(value / 3);
-    }
-    else {
-      total += value;
-    }
+    total += value;
   }
   player.score = total;
 }

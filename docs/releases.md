@@ -6,6 +6,10 @@
 
 ## Releases
 
+### v2.1.0 - 2026-01-24
+- Bug fixes:
+  - Make sure to count "points" for money coins, instead of the count of counts (and automatically dividing by 3)
+
 ### v2.0.0 - 2026-01-15
 - Bug fixes:
   - Cloud file naming for finished games is handled correctly now  
