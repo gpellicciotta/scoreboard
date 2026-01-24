@@ -2,7 +2,7 @@ import './counter-input.mjs';
 
 // Constants
 const APP_NAME = 'scoreboard';
-const APP_VERSION = `2.0.0`
+const APP_VERSION = `2.1.0`
 const LOCAL_STORAGE_KEY = `${APP_NAME}.v${APP_VERSION}`; // Use for local storage
 const CLOUD_SAVE_URL = 'https://script.google.com/macros/s/AKfycbwW11Xm9k-4WTUNq7LbJcRaYxvDYdwSqit6Nna0_CEWYfIXCrzqTTbrPbvxjeBoUw6P/exec';
 
@@ -254,6 +254,8 @@ function showView(templateId, onMount) {
   // Mount new view
   const mount = document.createElement('div');
   mount.id = 'mounted-view';
+  // Remember which template is mounted so we can do incremental updates
+  mount.dataset.templateId = templateId;
   mount.appendChild(tpl.content.cloneNode(true));
   app.appendChild(mount);
   // Transfer toolbar content into app-toolbar (which lives in header)
@@ -383,18 +385,77 @@ function applyRankClasses(li, score, rank, isLast) {
   }
 }
 
+function renderGenericScoreboard(list, players) {
+  if (!list || !tpl) return;
+  list.innerHTML = '';
+  // Compute ranks taking ties into account so we can style top-3
+  const sorted = [...players].slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || a.name.localeCompare(b.name));
+  const ranksByName = Object.create(null);
+  let lastRank = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i - 1].score) || 0) ? lastRank : i + 1;
+    ranksByName[sorted[i].name] = lastRank;
+  }
+  const isLastByName = {};
+  if (MARK_LAST && players.length) {
+    const minScore = Math.min(...players.map(p => Number(p.score) || 0));
+    players.filter(p => (Number(p.score) || 0) === minScore).forEach(p => { isLastByName[p.name] = true; });
+  }
+
+  // If auto-sort is enabled, render the sorted list; otherwise preserve insertion order
+  const renderPlayers = Boolean(state['auto-sort']) ? sorted : players;
+
+  renderPlayers.forEach(p => {
+    const node = tpl.content.cloneNode(true);
+    const li = node.querySelector('.score-item');
+    if (!li) return;
+    li.dataset.name = p.name;
+    const nameEl = li.querySelector('.score-name');
+    const valueEl = li.querySelector('.score-value');
+    if (nameEl) nameEl.textContent = p.name;
+    if (valueEl) valueEl.textContent = p.score;
+    // Apply rank classes
+    const rank = ranksByName[p.name] || null;
+    applyRankClasses(li, Number(p.score) || 0, rank, Boolean(isLastByName[p.name]));
+    list.appendChild(node);
+  });
+}
+
 function render() {
   if (_isConfiguring) return;
   updateTitle();
   // Choose appropriate template based on current game
   const game = state.game || '';
-  if (game === '7 Wonders Duel') {
+  // Determine target template id for this game
+  const templateId = (game === '7 Wonders Duel') ? 'tpl-duel' : (game === '7 Wonders') ? 'tpl-classic' : 'tpl-generic';
+  const existingMount = document.getElementById('mounted-view');
+
+  // If the desired template is already mounted, perform an incremental update
+  if (existingMount && existingMount.dataset && existingMount.dataset.templateId === templateId) {
+    if (templateId === 'tpl-duel') {
+      const container = existingMount.querySelector('#seven-wonders-duel-scoreboard');
+      renderDuelScoreboard(container, state.players || []);
+      return;
+    }
+    else if (templateId === 'tpl-classic') {
+      const container = existingMount.querySelector('#seven-wonders-classic-scoreboard');
+      renderClassicScoreboard(container, state.players || []);
+      return;
+    }
+    else {
+      const list = existingMount.querySelector('#scoreboard-list');
+      renderGenericScoreboard(list, state.players || []);
+    }
+  }
+
+  // Otherwise mount the appropriate template and run the onMount rendering
+  if (templateId === 'tpl-duel') {
     showView('tpl-duel', (mount) => {
       const container = mount.querySelector('#seven-wonders-duel-scoreboard');
       renderDuelScoreboard(container, state.players || []);
     });
   }
-  else if (game === '7 Wonders') {
+  else if (templateId === 'tpl-classic') {
     showView('tpl-classic', (mount) => {
       const container = mount.querySelector('#seven-wonders-classic-scoreboard');
       renderClassicScoreboard(container, state.players || []);
@@ -403,41 +464,7 @@ function render() {
   else {
     showView('tpl-generic', (mount) => {
       const list = mount.querySelector('#scoreboard-list');
-      // Render generic list: reuse existing rendering logic
-      if (list && tpl) {
-        list.innerHTML = '';
-        // Compute ranks taking ties into account so we can style top-3
-        const sorted = [...state.players].slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || a.name.localeCompare(b.name));
-        const ranksByName = Object.create(null);
-        let lastRank = 0;
-        for (let i = 0; i < sorted.length; i++) {
-          if (i === 0) lastRank = 1; else lastRank = (Number(sorted[i].score) || 0) === (Number(sorted[i - 1].score) || 0) ? lastRank : i + 1;
-          ranksByName[sorted[i].name] = lastRank;
-        }
-        const isLastByName = {};
-        if (MARK_LAST && state.players.length) {
-          const minScore = Math.min(...state.players.map(p => Number(p.score) || 0));
-          state.players.filter(p => (Number(p.score) || 0) === minScore).forEach(p => { isLastByName[p.name] = true; });
-        }
-
-        // If auto-sort is enabled, render the sorted list; otherwise preserve insertion order
-        const renderPlayers = Boolean(state['auto-sort']) ? sorted : state.players;
-
-        renderPlayers.forEach(p => {
-          const node = tpl.content.cloneNode(true);
-          const li = node.querySelector('.score-item');
-          if (!li) return;
-          li.dataset.name = p.name;
-          const nameEl = li.querySelector('.score-name');
-          const valueEl = li.querySelector('.score-value');
-          if (nameEl) nameEl.textContent = p.name;
-          if (valueEl) valueEl.textContent = p.score;
-          // Apply rank classes
-          const rank = ranksByName[p.name] || null;
-          applyRankClasses(li, Number(p.score) || 0, rank, Boolean(isLastByName[p.name]));
-          list.appendChild(node);
-        });
-      }
+      renderGenericScoreboard(list, state.players || []);
     });
   }
 }

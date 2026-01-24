@@ -9,6 +9,7 @@
 ### v2.1.0 - 2026-01-24
 - Bug fixes:
   - Make sure to count "points" for money coins, instead of the count of counts (and automatically dividing by 3)
+- Improved rendering logic to be more incremental, hence improving specifically the mobile UX (less flicker and loss of scroll positions)
 
 ### v2.0.0 - 2026-01-15
 - Bug fixes:
