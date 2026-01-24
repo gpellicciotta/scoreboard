@@ -1286,10 +1286,6 @@ function renderFinishedList(files, container) {
       detailsCell.innerHTML = '';
       const wrapper = document.createElement('div');
       wrapper.className = 'finished-game-scoreboard';
-      const header = document.createElement('div');
-      header.style.marginBottom = '0.5rem';
-      header.textContent = `Finished: ${entry.gameName} — ${entry.date ? entry.date.toLocaleString() : ''}`;
-      wrapper.appendChild(header);
       const players = Array.isArray(data.players) ? data.players : [];
       const listWrap = document.createElement('div');
       listWrap.className = 'finished-game-players';

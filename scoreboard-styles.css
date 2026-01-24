@@ -560,25 +560,62 @@ counter-input {
   border: 1px solid var(--muted-border);
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
 
-.toast .message { flex: 1 1 auto; }
-.toast .actions { display: flex; gap: 0.4rem; align-items: center }
-.toast .dismiss { background: transparent; border: none; color: var(--page-color); cursor: pointer; padding: 0.25rem; border-radius: 0.35rem }
-.toast.info { border-left: 4px solid var(--blue); }
-.toast.success { border-left: 4px solid green; }
-.toast.error { border-left: 4px solid #d9534f; background: rgba(217,83,79,0.04); }
-.toast.progress { border-left: 4px solid var(--blue); }
-
-.toast .spinner {
-  width: 1rem; height: 1rem; border-radius: 50%; border: 2px solid rgba(255,255,255,0.06); border-top-color: var(--blue); animation: spin 1s linear infinite;
+.toast .message {
+  flex: 1 1 auto;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+.toast .actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center
+}
+
+.toast .dismiss {
+  background: transparent;
+  border: none;
+  color: var(--page-color);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.35rem
+}
+
+.toast.info {
+  border-left: 4px solid var(--blue);
+}
+
+.toast.success {
+  border-left: 4px solid green;
+}
+
+.toast.error {
+  border-left: 4px solid #d9534f;
+  background: rgba(217, 83, 79, 0.04);
+}
+
+.toast.progress {
+  border-left: 4px solid var(--blue);
+}
+
+.toast .spinner {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-top-color: var(--blue);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .header-actions button i {
   font-size: var(--font-size-regular);
@@ -1285,6 +1322,10 @@ button.sidebar-toggle {
   transform: translateY(1px);
 }
 
+p .action {
+  margin: 0.25em 0;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -1338,9 +1379,7 @@ button.sidebar-toggle {
   font-size: 75%;
 }
 
-.default-view {
-  
-}
+.default-view {}
 
 #mounted-view .default-view .view-content {
   padding-bottom: calc(var(--app-header-height) + var(--app-header-height));
